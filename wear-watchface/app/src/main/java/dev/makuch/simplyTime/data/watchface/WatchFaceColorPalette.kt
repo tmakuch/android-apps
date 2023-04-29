@@ -2,7 +2,6 @@ package dev.makuch.simplyTime.data.watchface
 
 import android.content.Context
 import androidx.annotation.DrawableRes
-import androidx.wear.watchface.complications.rendering.ComplicationDrawable
 import dev.makuch.simplyTime.R
 
 data class WatchFaceColorPalette(
@@ -20,7 +19,7 @@ data class WatchFaceColorPalette(
                 activeFrontendColor = context.getColor(R.color.white_primary_color),
                 ambientFrontendColor = context.getColor(R.color.ambient_primary_color),
 
-                complicationStyleDrawableId = R.drawable.complication_white_style,
+                complicationStyleDrawableId = R.drawable.complication_style,
             )
         }
     }

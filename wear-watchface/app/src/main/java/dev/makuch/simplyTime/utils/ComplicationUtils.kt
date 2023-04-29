@@ -29,12 +29,10 @@ import androidx.wear.watchface.complications.rendering.ComplicationDrawable
 import androidx.wear.watchface.style.CurrentUserStyleRepository
 import dev.makuch.simplyTime.R
 
-private const val COMPLICATIONS_TOP_BOUND = 0.4f
-private const val COMPLICATIONS_BOTTOM_BOUND = 0.6f
-private const val COMPLICATION_LEFT_BOUND = 0.2f
-private const val COMPLICATION_RIGHT_BOUND = 0.4f
-
-private const val DEFAULT_COMPLICATION_STYLE_DRAWABLE_ID = R.drawable.complication_white_style
+private const val COMPLICATIONS_TOP_BOUND = 0.16f
+private const val COMPLICATIONS_BOTTOM_BOUND = 0.36f
+private const val COMPLICATION_LEFT_BOUND = 0.255f
+private const val COMPLICATION_RIGHT_BOUND = 0.455f
 
 internal const val COMPLICATION_ID = 100
 
@@ -53,7 +51,7 @@ sealed class ComplicationConfig(val id: Int, val supportedTypes: List<Complicati
 fun createComplicationSlotManager(
     context: Context,
     currentUserStyleRepository: CurrentUserStyleRepository,
-    drawableId: Int = DEFAULT_COMPLICATION_STYLE_DRAWABLE_ID
+    drawableId: Int = R.drawable.complication_style
 ): ComplicationSlotsManager {
     val defaultCanvasComplicationFactory =
         CanvasComplicationFactory { watchState, listener ->
