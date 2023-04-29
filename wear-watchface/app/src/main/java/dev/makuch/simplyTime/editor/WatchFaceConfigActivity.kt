@@ -20,21 +20,11 @@ import android.util.Log
 import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
-import dev.makuch.simplyTime.data.watchface.ColorStyleIdAndResourceIds
 import dev.makuch.simplyTime.databinding.ActivityWatchFaceConfigBinding
-import dev.makuch.simplyTime.editor.WatchFaceConfigStateHolder.Companion.MINUTE_HAND_LENGTH_DEFAULT_FOR_SLIDER
-import dev.makuch.simplyTime.editor.WatchFaceConfigStateHolder.Companion.MINUTE_HAND_LENGTH_MAXIMUM_FOR_SLIDER
-import dev.makuch.simplyTime.editor.WatchFaceConfigStateHolder.Companion.MINUTE_HAND_LENGTH_MINIMUM_FOR_SLIDER
-import dev.makuch.simplyTime.utils.LEFT_COMPLICATION_ID
-import dev.makuch.simplyTime.utils.RIGHT_COMPLICATION_ID
+import dev.makuch.simplyTime.utils.COMPLICATION_ID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-/**
- * Allows user to edit certain parts of the watch face (color style, ticks displayed, minute arm
- * length) by using the [WatchFaceConfigStateHolder]. (All widgets are disabled until data is
- * loaded.)
- */
 class WatchFaceConfigActivity : ComponentActivity() {
     private val stateHolder: WatchFaceConfigStateHolder by lazy {
         WatchFaceConfigStateHolder(
@@ -53,19 +43,7 @@ class WatchFaceConfigActivity : ComponentActivity() {
         setContentView(binding.root)
 
         // Disable widgets until data loads and values are set.
-        binding.colorStylePickerButton.isEnabled = false
-        binding.ticksEnabledSwitch.isEnabled = false
-        binding.minuteHandLengthSlider.isEnabled = false
-
-        // Set max and min.
-        binding.minuteHandLengthSlider.valueTo = MINUTE_HAND_LENGTH_MAXIMUM_FOR_SLIDER
-        binding.minuteHandLengthSlider.valueFrom = MINUTE_HAND_LENGTH_MINIMUM_FOR_SLIDER
-        binding.minuteHandLengthSlider.value = MINUTE_HAND_LENGTH_DEFAULT_FOR_SLIDER
-
-        binding.minuteHandLengthSlider.addOnChangeListener { slider, value, fromUser ->
-            Log.d(TAG, "addOnChangeListener(): $slider, $value, $fromUser")
-            stateHolder.setMinuteHandArmLength(value)
-        }
+        binding.divisionRingSwitch.isEnabled = false
 
         lifecycleScope.launch(Dispatchers.Main.immediate) {
             stateHolder.uiState
@@ -91,46 +69,17 @@ class WatchFaceConfigActivity : ComponentActivity() {
     ) {
         Log.d(TAG, "updateWatchFacePreview: $userStylesAndPreview")
 
-        val colorStyleId: String = userStylesAndPreview.colorStyleId
-        Log.d(TAG, "\tselected color style: $colorStyleId")
-
-        binding.ticksEnabledSwitch.isChecked = userStylesAndPreview.ticksEnabled
-        binding.minuteHandLengthSlider.value = userStylesAndPreview.minuteHandLength
-        binding.preview.watchFaceBackground.setImageBitmap(userStylesAndPreview.previewImage)
-
-        enabledWidgets()
+        binding.divisionRingSwitch.isChecked = userStylesAndPreview.showDivisionRingEnabled
     }
 
-    private fun enabledWidgets() {
-        binding.colorStylePickerButton.isEnabled = true
-        binding.ticksEnabledSwitch.isEnabled = true
-        binding.minuteHandLengthSlider.isEnabled = true
-    }
-
-    fun onClickColorStylePickerButton(view: View) {
-        Log.d(TAG, "onClickColorStylePickerButton() $view")
-
-        // TODO (codingjeremy): Replace with a RecyclerView to choose color style (next CL)
-        // Selects a random color style from list.
-        val colorStyleIdAndResourceIdsList = enumValues<ColorStyleIdAndResourceIds>()
-        val newColorStyle: ColorStyleIdAndResourceIds = colorStyleIdAndResourceIdsList.random()
-
-        stateHolder.setColorStyle(newColorStyle.id)
-    }
-
-    fun onClickLeftComplicationButton(view: View) {
+    fun onClickComplicationButton(view: View) {
         Log.d(TAG, "onClickLeftComplicationButton() $view")
-        stateHolder.setComplication(LEFT_COMPLICATION_ID)
+        stateHolder.setComplication(COMPLICATION_ID)
     }
 
-    fun onClickRightComplicationButton(view: View) {
-        Log.d(TAG, "onClickRightComplicationButton() $view")
-        stateHolder.setComplication(RIGHT_COMPLICATION_ID)
-    }
-
-    fun onClickTicksEnabledSwitch(view: View) {
+    fun onClickDivisionRingSwitch(view: View) {
         Log.d(TAG, "onClickTicksEnabledSwitch() $view")
-        stateHolder.setDrawPips(binding.ticksEnabledSwitch.isChecked)
+        stateHolder.setDivisionRing(binding.divisionRingSwitch.isChecked)
     }
 
     companion object {

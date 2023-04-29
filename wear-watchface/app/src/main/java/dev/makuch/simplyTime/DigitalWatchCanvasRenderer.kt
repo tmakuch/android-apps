@@ -19,12 +19,9 @@ import androidx.wear.watchface.style.CurrentUserStyleRepository
 import androidx.wear.watchface.style.UserStyle
 import androidx.wear.watchface.style.UserStyleSetting
 import androidx.wear.watchface.style.WatchFaceLayer
-import dev.makuch.simplyTime.data.watchface.ColorStyleIdAndResourceIds
 import dev.makuch.simplyTime.data.watchface.WatchFaceColorPalette
 import dev.makuch.simplyTime.data.watchface.WatchFaceData
-import dev.makuch.simplyTime.utils.COLOR_STYLE_SETTING
-import dev.makuch.simplyTime.utils.DRAW_HOUR_PIPS_STYLE_SETTING
-import dev.makuch.simplyTime.utils.WATCH_HAND_LENGTH_STYLE_SETTING
+import dev.makuch.simplyTime.utils.SHOW_DIVISION_RING_SETTING
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -32,8 +29,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import java.time.Duration
 import java.time.ZonedDateTime
-import kotlin.math.cos
-import kotlin.math.sin
 
 // Default for how long each frame is displayed at expected frame rate.
 private const val FRAME_PERIOD_MS_DEFAULT: Long = 16L
@@ -76,35 +71,11 @@ class DigitalWatchCanvasRenderer(
         context,
     )
 
-    // Initializes paint object for painting the clock hands with default values.
-    private val clockHandPaint = Paint().apply {
-        isAntiAlias = true
-        strokeWidth =
-            context.resources.getDimensionPixelSize(R.dimen.clock_hand_stroke_width).toFloat()
-    }
-
-    private val outerElementPaint = Paint().apply {
-        isAntiAlias = true
-    }
-
-    // Used to paint the main hour hand text with the hour pips, i.e., 3, 6, 9, and 12 o'clock.
     private val textPaint = Paint().apply {
         isAntiAlias = true
         textSize = context.resources.getDimensionPixelSize(R.dimen.hour_mark_size).toFloat()
     }
 
-    private lateinit var hourHandFill: Path
-    private lateinit var hourHandBorder: Path
-    private lateinit var minuteHandFill: Path
-    private lateinit var minuteHandBorder: Path
-    private lateinit var secondHand: Path
-
-    // Changed when setting changes cause a change in the minute hand arm (triggered by user in
-    // updateUserStyle() via userStyleRepository.addUserStyleListener()).
-    private var armLengthChangedRecalculateClockHands: Boolean = false
-
-    // Default size of watch face drawing area, that is, a no size rectangle. Will be replaced with
-    // valid dimensions from the system.
     private var currentWatchFaceSize = Rect(0, 0, 0, 0)
 
     init {
@@ -131,40 +102,12 @@ class DigitalWatchCanvasRenderer(
         // Loops through user style and applies new values to watchFaceData.
         for (options in userStyle) {
             when (options.key.id.toString()) {
-                COLOR_STYLE_SETTING -> {
-                    val listOption = options.value as
-                            UserStyleSetting.ListUserStyleSetting.ListOption
-
-                    newWatchFaceData = newWatchFaceData.copy(
-                        activeColorStyle = ColorStyleIdAndResourceIds.getColorStyleConfig(
-                            listOption.id.toString()
-                        )
-                    )
-                }
-                DRAW_HOUR_PIPS_STYLE_SETTING -> {
+                SHOW_DIVISION_RING_SETTING -> {
                     val booleanValue = options.value as
                             UserStyleSetting.BooleanUserStyleSetting.BooleanOption
 
                     newWatchFaceData = newWatchFaceData.copy(
-                        drawHourPips = booleanValue.value
-                    )
-                }
-                WATCH_HAND_LENGTH_STYLE_SETTING -> {
-                    val doubleValue = options.value as
-                            UserStyleSetting.DoubleRangeUserStyleSetting.DoubleRangeOption
-
-                    // The arm lengths are usually only calculated the first time the watch face is
-                    // loaded to reduce the ops in the onDraw(). Because we updated the minute hand
-                    // watch length, we need to trigger a recalculation.
-                    armLengthChangedRecalculateClockHands = true
-
-                    // Updates length of minute hand based on edits from user.
-                    val newMinuteHandDimensions = newWatchFaceData.minuteHandDimensions.copy(
-                        lengthFraction = doubleValue.value.toFloat()
-                    )
-
-                    newWatchFaceData = newWatchFaceData.copy(
-                        minuteHandDimensions = newMinuteHandDimensions
+                        showDivisionRing = booleanValue.value
                     )
                 }
             }
@@ -174,14 +117,6 @@ class DigitalWatchCanvasRenderer(
         if (watchFaceData != newWatchFaceData) {
             watchFaceData = newWatchFaceData
 
-            // Recreates Color and ComplicationDrawable from resource ids.
-            watchFaceColors = WatchFaceColorPalette.getWatchFaceColorPalette(
-                context
-            )
-
-            // Applies the user chosen complication color scheme changes. ComplicationDrawables for
-            // each of the styles are defined in XML so we need to replace the complication's
-            // drawables.
             for ((_, complication) in complicationSlotsManager.complicationSlots) {
                 ComplicationDrawable.getDrawable(
                     context,
@@ -220,35 +155,15 @@ class DigitalWatchCanvasRenderer(
         zonedDateTime: ZonedDateTime,
         sharedAssets: DigitalSharedAssets
     ) {
-        val backgroundColor = if (renderParameters.drawMode == DrawMode.AMBIENT) {
-            watchFaceColors.ambientBackgroundColor
-        } else {
-            watchFaceColors.activeBackgroundColor
-        }
-
-        canvas.drawColor(backgroundColor)
+        canvas.drawColor(watchFaceColors.backgroundColor)
 
         // CanvasComplicationDrawable already obeys rendererParameters.
         drawComplications(canvas, zonedDateTime)
+        drawHours(canvas, bounds, zonedDateTime)
 
-        if (renderParameters.watchFaceLayers.contains(WatchFaceLayer.COMPLICATIONS_OVERLAY)) {
-            drawClockHands(canvas, bounds, zonedDateTime)
-        }
-
-        if (renderParameters.drawMode == DrawMode.INTERACTIVE &&
-            renderParameters.watchFaceLayers.contains(WatchFaceLayer.BASE) &&
-            watchFaceData.drawHourPips
-        ) {
-            drawNumberStyleOuterElement(
-                canvas,
-                bounds,
-                watchFaceData.numberRadiusFraction,
-                watchFaceData.numberStyleOuterCircleRadiusFraction,
-                watchFaceColors.activeOuterElementColor,
-                watchFaceData.numberStyleOuterCircleRadiusFraction,
-                watchFaceData.gapBetweenOuterCircleAndBorderFraction
-            )
-        }
+//        if (renderParameters.watchFaceLayers.contains(WatchFaceLayer.COMPLICATIONS_OVERLAY)) { //TODO ten if jest do wywalenia?
+//            drawClockHands(canvas, bounds, zonedDateTime)
+//        }
     }
 
     // ----- All drawing functions -----
@@ -260,39 +175,15 @@ class DigitalWatchCanvasRenderer(
         }
     }
 
-    private fun drawClockHands(
+    private fun drawHours(
         canvas: Canvas,
         bounds: Rect,
         zonedDateTime: ZonedDateTime
     ) {
-        // Only recalculate bounds (watch face size/surface) has changed or the arm of one of the
-        // clock hands has changed (via user input in the settings).
-        // NOTE: Watch face surface usually only updates one time (when the size of the device is
-        // initially broadcasted).
-        if (currentWatchFaceSize != bounds || armLengthChangedRecalculateClockHands) {
-            armLengthChangedRecalculateClockHands = false
-            currentWatchFaceSize = bounds
-            recalculateClockHands(bounds)
-        }
-
-        // Retrieve current time to calculate location/rotation of watch arms.
-        val secondOfDay = zonedDateTime.toLocalTime().toSecondOfDay()
-
-        // Determine the rotation of the hour and minute hand.
-
-        // Determine how many seconds it takes to make a complete rotation for each hand
-        // It takes the hour hand 12 hours to make a complete rotation
-        val secondsPerHourHandRotation = Duration.ofHours(12).seconds
-        // It takes the minute hand 1 hour to make a complete rotation
-        val secondsPerMinuteHandRotation = Duration.ofHours(1).seconds
-
-        // Determine the angle to draw each hand expressed as an angle in degrees from 0 to 360
-        // Since each hand does more than one cycle a day, we are only interested in the remainder
-        // of the secondOfDay modulo the hand interval
-        val hourRotation = secondOfDay.rem(secondsPerHourHandRotation) * 360.0f /
-            secondsPerHourHandRotation
-        val minuteRotation = secondOfDay.rem(secondsPerMinuteHandRotation) * 360.0f /
-            secondsPerMinuteHandRotation
+        val localTime = zonedDateTime.toLocalTime()
+        val seconds = localTime.second
+        val minutes = localTime.minute
+        val hours = localTime.hour
 
         canvas.withScale(
             x = WATCH_HAND_SCALE,
@@ -335,45 +226,6 @@ class DigitalWatchCanvasRenderer(
                 }
             }
         }
-    }
-
-    /*
-     * Rarely called (only when watch face surface changes; usually only once) from the
-     * drawClockHands() method.
-     */
-    private fun recalculateClockHands(bounds: Rect) {
-        Log.d(TAG, "recalculateClockHands()")
-        hourHandBorder =
-            createClockHand(
-                bounds,
-                watchFaceData.hourHandDimensions.lengthFraction,
-                watchFaceData.hourHandDimensions.widthFraction,
-                watchFaceData.gapBetweenHandAndCenterFraction,
-                watchFaceData.hourHandDimensions.xRadiusRoundedCorners,
-                watchFaceData.hourHandDimensions.yRadiusRoundedCorners
-            )
-        hourHandFill = hourHandBorder
-
-        minuteHandBorder =
-            createClockHand(
-                bounds,
-                watchFaceData.minuteHandDimensions.lengthFraction,
-                watchFaceData.minuteHandDimensions.widthFraction,
-                watchFaceData.gapBetweenHandAndCenterFraction,
-                watchFaceData.minuteHandDimensions.xRadiusRoundedCorners,
-                watchFaceData.minuteHandDimensions.yRadiusRoundedCorners
-            )
-        minuteHandFill = minuteHandBorder
-
-        secondHand =
-            createClockHand(
-                bounds,
-                watchFaceData.secondHandDimensions.lengthFraction,
-                watchFaceData.secondHandDimensions.widthFraction,
-                watchFaceData.gapBetweenHandAndCenterFraction,
-                watchFaceData.secondHandDimensions.xRadiusRoundedCorners,
-                watchFaceData.secondHandDimensions.yRadiusRoundedCorners
-            )
     }
 
     /**
@@ -426,49 +278,6 @@ class DigitalWatchCanvasRenderer(
         return path
     }
 
-    private fun drawNumberStyleOuterElement(
-        canvas: Canvas,
-        bounds: Rect,
-        numberRadiusFraction: Float,
-        outerCircleStokeWidthFraction: Float,
-        outerElementColor: Int,
-        numberStyleOuterCircleRadiusFraction: Float,
-        gapBetweenOuterCircleAndBorderFraction: Float
-    ) {
-        // Draws text hour indicators (12, 3, 6, and 9).
-        val textBounds = Rect()
-        textPaint.color = outerElementColor
-        for (i in 0 until 4) {
-            val rotation = 0.5f * (i + 1).toFloat() * Math.PI
-            val dx = sin(rotation).toFloat() * numberRadiusFraction * bounds.width().toFloat()
-            val dy = -cos(rotation).toFloat() * numberRadiusFraction * bounds.width().toFloat()
-            textPaint.getTextBounds(HOUR_MARKS[i], 0, HOUR_MARKS[i].length, textBounds)
-            canvas.drawText(
-                HOUR_MARKS[i],
-                bounds.exactCenterX() + dx - textBounds.width() / 2.0f,
-                bounds.exactCenterY() + dy + textBounds.height() / 2.0f,
-                textPaint
-            )
-        }
-
-        // Draws dots for the remain hour indicators between the numbers above.
-        outerElementPaint.strokeWidth = outerCircleStokeWidthFraction * bounds.width()
-        outerElementPaint.color = outerElementColor
-        canvas.save()
-        for (i in 0 until 12) {
-            if (i % 3 != 0) {
-                drawTopMiddleCircle(
-                    canvas,
-                    bounds,
-                    numberStyleOuterCircleRadiusFraction,
-                    gapBetweenOuterCircleAndBorderFraction
-                )
-            }
-            canvas.rotate(360.0f / 12.0f, bounds.exactCenterX(), bounds.exactCenterY())
-        }
-        canvas.restore()
-    }
-
     /** Draws the outer circle on the top middle of the given bounds. */
     private fun drawTopMiddleCircle(
         canvas: Canvas,
@@ -492,11 +301,5 @@ class DigitalWatchCanvasRenderer(
 
     companion object {
         private const val TAG = "AnalogWatchCanvasRenderer"
-
-        // Painted between pips on watch face for hour marks.
-        private val HOUR_MARKS = arrayOf("3", "6", "9", "12")
-
-        // Used to canvas.scale() to scale watch hands in proper bounds. This will always be 1.0.
-        private const val WATCH_HAND_SCALE = 1.0f
     }
 }
