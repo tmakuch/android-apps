@@ -18,6 +18,8 @@ import androidx.wear.watchface.style.UserStyleSetting
 import dev.makuch.simplyTime.data.watchface.WatchFaceColorPalette
 import dev.makuch.simplyTime.data.watchface.WatchFaceData
 import dev.makuch.simplyTime.utils.SHOW_DIVISION_RING_SETTING
+import dev.makuch.simplyTime.utils.mapDayOfWeek
+import java.time.LocalTime
 import java.time.ZonedDateTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -56,7 +58,8 @@ class DigitalWatchCanvasRenderer(
         CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     private val fontHeightOffsetModificator: Float = (1 / 2.8).toFloat()
-    private val textMargin: Float = context.resources.getDimensionPixelSize(R.dimen.text_margin).toFloat()
+    private val topMargin: Float =
+        context.resources.getDimensionPixelSize(R.dimen.top_margin).toFloat()
 
     // Represents all data needed to render the watch face. All value defaults are constants. Only
     // three values are changeable by the user (color scheme, ticks being rendered, and length of
@@ -86,6 +89,13 @@ class DigitalWatchCanvasRenderer(
     private val secondaryTextPaint = Paint().apply {
         isAntiAlias = true
         textSize = context.resources.getDimensionPixelSize(R.dimen.secondary_font_size).toFloat()
+        color = watchFaceColors.activeFrontendColor
+        typeface = context.resources.getFont(R.font.digital)
+    }
+
+    private val tertiaryTextPaint = Paint().apply {
+        isAntiAlias = true
+        textSize = context.resources.getDimensionPixelSize(R.dimen.tertiary_font_size).toFloat()
         color = watchFaceColors.activeFrontendColor
         typeface = context.resources.getFont(R.font.digital)
     }
@@ -169,45 +179,42 @@ class DigitalWatchCanvasRenderer(
     ) {
         canvas.drawColor(watchFaceColors.backgroundColor)
 
-        // CanvasComplicationDrawable already obeys rendererParameters.
-        drawComplications(canvas, zonedDateTime)
-        drawHours(canvas, bounds, zonedDateTime)
+        val localTime = zonedDateTime.toLocalTime()
+        val isAmbient = renderParameters.drawMode == DrawMode.AMBIENT
+        val heightOffset = textPaint.textSize * fontHeightOffsetModificator
 
-//        if (renderParameters.watchFaceLayers.contains(WatchFaceLayer.COMPLICATIONS_OVERLAY)) { //TODO ten if jest do wywalenia?
-//            drawClockHands(canvas, bounds, zonedDateTime)
-//        }
+        drawMainTime(canvas, bounds, localTime, isAmbient, heightOffset)
+        if (!isAmbient) {
+            drawComplications(canvas, zonedDateTime)
+            drawSeconds(canvas, bounds, localTime, heightOffset)
+            drawDate(canvas, bounds, zonedDateTime, heightOffset)
+        }
     }
 
     // ----- All drawing functions -----
     private fun drawComplications(canvas: Canvas, zonedDateTime: ZonedDateTime) {
-        val isAmbient = renderParameters.drawMode == DrawMode.AMBIENT
-
-        if (!isAmbient) {
-            for ((_, complication) in complicationSlotsManager.complicationSlots) {
-                if (complication.enabled) {
-                    complication.render(canvas, zonedDateTime, renderParameters)
-                }
+        for ((_, complication) in complicationSlotsManager.complicationSlots) {
+            if (complication.enabled) {
+                complication.render(canvas, zonedDateTime, renderParameters)
             }
         }
     }
 
-    private fun drawHours(
+    private fun drawMainTime(
         canvas: Canvas,
         bounds: Rect,
-        zonedDateTime: ZonedDateTime
+        localTime: LocalTime,
+        isAmbient: Boolean,
+        heightOffset: Float
     ) {
-        val localTime = zonedDateTime.toLocalTime()
-        val seconds = java.lang.String.format("%02d", localTime.second)
-        val minutes = java.lang.String.format("%02d", localTime.minute)
+        val minutes = String.format("%02d", localTime.minute)
         val hours = localTime.hour.toString()
 
-        val isAmbient = renderParameters.drawMode == DrawMode.AMBIENT
         val isAnyOtherHalfOfSecond = localTime.nano > 500000000
 
         val wholeTimeOffset = textPaint.measureText("$hours:$minutes") / 2
         val hoursWidth = textPaint.measureText(hours)
         val colonWidth = textPaint.measureText(":")
-        val heightOffset = textPaint.textSize * fontHeightOffsetModificator
 
         val fontToUse = if (isAmbient) ambientTextPaint else textPaint
 
@@ -231,26 +238,56 @@ class DigitalWatchCanvasRenderer(
             bounds.centerY().toFloat() + heightOffset,
             fontToUse
         )
-        if (!isAmbient) {
-            val yPosition = bounds.centerY().toFloat() + heightOffset - textMargin - secondaryTextPaint.textSize
-            val secondaryColonWidth = secondaryTextPaint.measureText(":")
+    }
 
-            if (isAnyOtherHalfOfSecond) {
-                canvas.drawText(
-                    ":",
-                    bounds.centerX().toFloat(),
-                    yPosition,
-                    secondaryTextPaint
-                )
-            }
+    private fun drawSeconds(
+        canvas: Canvas,
+        bounds: Rect,
+        localTime: LocalTime,
+        heightOffset: Float
+    ) {
+        val seconds = String.format("%02d", localTime.second)
 
+        val isAnyOtherHalfOfSecond = localTime.nano > 500000000
+
+
+        val yPosition =
+            bounds.centerY().toFloat() + heightOffset - topMargin - secondaryTextPaint.textSize
+        val secondaryColonWidth = secondaryTextPaint.measureText(":")
+
+        if (isAnyOtherHalfOfSecond) {
             canvas.drawText(
-                seconds,
-                bounds.centerX() + secondaryColonWidth,
+                ":",
+                bounds.centerX().toFloat(),
                 yPosition,
                 secondaryTextPaint
             )
         }
+
+        canvas.drawText(
+            seconds,
+            bounds.centerX() + secondaryColonWidth,
+            yPosition,
+            secondaryTextPaint
+        )
+    }
+
+    private fun drawDate(
+        canvas: Canvas,
+        bounds: Rect,
+        zonedDateTime: ZonedDateTime,
+        heightOffset: Float
+    ) {
+        val dayOfMonth = zonedDateTime.dayOfMonth
+        val dayOfWeek = mapDayOfWeek(zonedDateTime.dayOfWeek)
+        val text = "$dayOfWeek.$dayOfMonth"
+
+        canvas.drawText(
+            text,
+            bounds.width() * 0.3f,
+            bounds.centerY().toFloat() + heightOffset + tertiaryTextPaint.textSize,
+            tertiaryTextPaint
+        )
     }
 
 //
