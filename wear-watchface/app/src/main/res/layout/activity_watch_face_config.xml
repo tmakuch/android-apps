@@ -46,7 +46,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             style="@style/Widget.WatchFace.Button"
-            app:icon="@drawable/color_style_icon"
+            app:icon="@drawable/empty"
             app:iconPadding="@dimen/activity_config_style_picker_icon_padding"
             android:padding="@dimen/no_padding"
             android:gravity="start|center_vertical"
