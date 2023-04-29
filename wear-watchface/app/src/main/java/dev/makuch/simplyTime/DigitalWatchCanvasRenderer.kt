@@ -152,6 +152,7 @@ class DigitalWatchCanvasRenderer(
 
         drawMainTime(canvas, bounds, localTime, isAmbient, heightOffset)
         if (!isAmbient) {
+            drawDivisionRing(canvas, bounds)
             drawComplications(canvas, zonedDateTime)
             drawSeconds(canvas, bounds, localTime, heightOffset)
             drawDate(canvas, bounds, zonedDateTime, heightOffset)
@@ -258,23 +259,17 @@ class DigitalWatchCanvasRenderer(
     }
 
 
-//    private fun drawDivisionRing(
-//        canvas: Canvas,
-//        bounds: Rect,
-//        radiusFraction: Float,
-//        gapBetweenOuterCircleAndBorderFraction: Float
-//    ) {
-//        // X and Y coordinates of the center of the circle.
-//        val centerX = 0.5f * bounds.width().toFloat()
-//        val centerY = bounds.width() * (gapBetweenOuterCircleAndBorderFraction + radiusFraction)
-//
-//        canvas.drawCircle(
-//            centerX,
-//            centerY,
-//            radiusFraction * bounds.width(),
-//            watchFacePaints.divisionRingPaint
-//        )
-//    }
+    private fun drawDivisionRing(
+        canvas: Canvas,
+        bounds: Rect,
+    ) {
+        canvas.drawCircle(
+            bounds.exactCenterX(),
+            bounds.exactCenterY(),
+            bounds.width().toFloat() / 2,
+            watchFacePaints.divisionRingPaint
+        )
+    }
 
     companion object {
         private const val TAG = "AnalogWatchCanvasRenderer"

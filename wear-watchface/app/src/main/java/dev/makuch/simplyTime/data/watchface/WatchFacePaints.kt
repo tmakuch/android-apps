@@ -44,7 +44,8 @@ data class WatchFacePaints(
                 divisionRingPaint = Paint().apply {
                     isAntiAlias = true
                     style = Paint.Style.STROKE
-                    color = watchFaceColors.activeFrontendColor
+                    color = watchFaceColors.divisionRingColor
+                    strokeWidth = 20f //half is of the screen
                 }
             )
         }
