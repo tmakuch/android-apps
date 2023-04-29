@@ -17,7 +17,6 @@ package dev.makuch.simplyTime.data.watchface
 
 import android.content.Context
 import android.graphics.drawable.Icon
-import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.wear.watchface.style.UserStyleSetting
@@ -28,9 +27,6 @@ import dev.makuch.simplyTime.R
 // X_COLOR_STYLE_ID - id in watch face database for each style id.
 // X_COLOR_STYLE_NAME_RESOURCE_ID - String name to display in the user settings UI for the style.
 // X_COLOR_STYLE_ICON_ID - Icon to display in the user settings UI for the style.
-const val AMBIENT_COLOR_STYLE_ID = "ambient_style_id"
-private const val AMBIENT_COLOR_STYLE_NAME_RESOURCE_ID = R.string.ambient_style_name
-private const val AMBIENT_COLOR_STYLE_ICON_ID = R.drawable.white_style
 
 const val RED_COLOR_STYLE_ID = "red_style_id"
 private const val RED_COLOR_STYLE_NAME_RESOURCE_ID = R.string.red_style_name
@@ -44,9 +40,6 @@ const val BLUE_COLOR_STYLE_ID = "blue_style_id"
 private const val BLUE_COLOR_STYLE_NAME_RESOURCE_ID = R.string.blue_style_name
 private const val BLUE_COLOR_STYLE_ICON_ID = R.drawable.blue_style
 
-const val WHITE_COLOR_STYLE_ID = "white_style_id"
-private const val WHITE_COLOR_STYLE_NAME_RESOURCE_ID = R.string.white_style_name
-private const val WHITE_COLOR_STYLE_ICON_ID = R.drawable.white_style
 
 /**
  * Represents watch face color style options the user can select (includes the unique id, the
@@ -61,66 +54,27 @@ enum class ColorStyleIdAndResourceIds(
     val id: String,
     @StringRes val nameResourceId: Int,
     @DrawableRes val iconResourceId: Int,
-    @DrawableRes val complicationStyleDrawableId: Int,
-    @ColorRes val primaryColorId: Int,
-    @ColorRes val secondaryColorId: Int,
-    @ColorRes val backgroundColorId: Int,
-    @ColorRes val outerElementColorId: Int
 ) {
-    AMBIENT(
-        id = AMBIENT_COLOR_STYLE_ID,
-        nameResourceId = AMBIENT_COLOR_STYLE_NAME_RESOURCE_ID,
-        iconResourceId = AMBIENT_COLOR_STYLE_ICON_ID,
-        complicationStyleDrawableId = R.drawable.complication_white_style,
-        primaryColorId = R.color.ambient_primary_color,
-        secondaryColorId = R.color.ambient_secondary_color,
-        backgroundColorId = R.color.ambient_background_color,
-        outerElementColorId = R.color.ambient_outer_element_color
-    ),
 
     RED(
         id = RED_COLOR_STYLE_ID,
         nameResourceId = RED_COLOR_STYLE_NAME_RESOURCE_ID,
         iconResourceId = RED_COLOR_STYLE_ICON_ID,
-        complicationStyleDrawableId = R.drawable.complication_red_style,
-        primaryColorId = R.color.red_primary_color,
-        secondaryColorId = R.color.red_secondary_color,
-        backgroundColorId = R.color.red_background_color,
-        outerElementColorId = R.color.red_outer_element_color
     ),
 
     GREEN(
         id = GREEN_COLOR_STYLE_ID,
         nameResourceId = GREEN_COLOR_STYLE_NAME_RESOURCE_ID,
         iconResourceId = GREEN_COLOR_STYLE_ICON_ID,
-        complicationStyleDrawableId = R.drawable.complication_green_style,
-        primaryColorId = R.color.green_primary_color,
-        secondaryColorId = R.color.green_secondary_color,
-        backgroundColorId = R.color.green_background_color,
-        outerElementColorId = R.color.green_outer_element_color
     ),
 
     BLUE(
         id = BLUE_COLOR_STYLE_ID,
         nameResourceId = BLUE_COLOR_STYLE_NAME_RESOURCE_ID,
         iconResourceId = BLUE_COLOR_STYLE_ICON_ID,
-        complicationStyleDrawableId = R.drawable.complication_blue_style,
-        primaryColorId = R.color.blue_primary_color,
-        secondaryColorId = R.color.blue_secondary_color,
-        backgroundColorId = R.color.blue_background_color,
-        outerElementColorId = R.color.blue_outer_element_color
-    ),
-
-    WHITE(
-        id = WHITE_COLOR_STYLE_ID,
-        nameResourceId = WHITE_COLOR_STYLE_NAME_RESOURCE_ID,
-        iconResourceId = WHITE_COLOR_STYLE_ICON_ID,
-        complicationStyleDrawableId = R.drawable.complication_white_style,
-        primaryColorId = R.color.white_primary_color,
-        secondaryColorId = R.color.white_secondary_color,
-        backgroundColorId = R.color.white_background_color,
-        outerElementColorId = R.color.white_outer_element_color
     );
+
+
 
     companion object {
         /**
@@ -128,12 +82,10 @@ enum class ColorStyleIdAndResourceIds(
          */
         fun getColorStyleConfig(id: String): ColorStyleIdAndResourceIds {
             return when (id) {
-                AMBIENT.id -> AMBIENT
                 RED.id -> RED
                 GREEN.id -> GREEN
                 BLUE.id -> BLUE
-                WHITE.id -> WHITE
-                else -> WHITE
+                else -> BLUE
             }
         }
 

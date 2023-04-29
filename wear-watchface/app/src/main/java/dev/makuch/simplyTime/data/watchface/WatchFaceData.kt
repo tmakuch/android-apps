@@ -35,7 +35,6 @@ private const val SECOND_HAND_WIDTH_FRACTION = 0.00934f
 
 // Used for corner roundness of the arms.
 private const val ROUNDED_RECTANGLE_CORNERS_RADIUS = 1.5f
-private const val SQUARE_RECTANGLE_CORNERS_RADIUS = 0.0f
 
 private const val CENTER_CIRCLE_DIAMETER_FRACTION = 0.03738f
 private const val OUTER_CIRCLE_STROKE_WIDTH_FRACTION = 0.00467f
@@ -52,7 +51,6 @@ private const val NUMBER_RADIUS_FRACTION = 0.45f
  */
 data class WatchFaceData(
     val activeColorStyle: ColorStyleIdAndResourceIds = ColorStyleIdAndResourceIds.RED,
-    val ambientColorStyle: ColorStyleIdAndResourceIds = ColorStyleIdAndResourceIds.AMBIENT,
     val drawHourPips: Boolean = DRAW_HOUR_PIPS_DEFAULT,
     val hourHandDimensions: ArmDimensions = ArmDimensions(
         lengthFraction = HOUR_HAND_LENGTH_FRACTION,

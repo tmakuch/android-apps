@@ -1,4 +1,4 @@
-package com.example.android.wearable.alpha
+package dev.makuch.simplyTime
 
 import android.content.Context
 import android.graphics.Canvas
@@ -19,8 +19,6 @@ import androidx.wear.watchface.style.CurrentUserStyleRepository
 import androidx.wear.watchface.style.UserStyle
 import androidx.wear.watchface.style.UserStyleSetting
 import androidx.wear.watchface.style.WatchFaceLayer
-import dev.makuch.simplyTime.FRAME_PERIOD_MS_DEFAULT
-import dev.makuch.simplyTime.R
 import dev.makuch.simplyTime.data.watchface.ColorStyleIdAndResourceIds
 import dev.makuch.simplyTime.data.watchface.WatchFaceColorPalette
 import dev.makuch.simplyTime.data.watchface.WatchFaceData
@@ -36,6 +34,9 @@ import java.time.Duration
 import java.time.ZonedDateTime
 import kotlin.math.cos
 import kotlin.math.sin
+
+// Default for how long each frame is displayed at expected frame rate.
+private const val FRAME_PERIOD_MS_DEFAULT: Long = 16L
 
 /**
  * Renders watch face via data in Room database. Also, updates watch face state based on setting
@@ -53,6 +54,7 @@ class DigitalWatchCanvasRenderer(
     currentUserStyleRepository,
     watchState,
     canvasType,
+    FRAME_PERIOD_MS_DEFAULT,
     clearWithBackgroundTintBeforeRenderingHighlightLayer = false
 ) {
     class DigitalSharedAssets : SharedAssets {
@@ -70,10 +72,8 @@ class DigitalWatchCanvasRenderer(
     private var watchFaceData: WatchFaceData = WatchFaceData()
 
     // Converts resource ids into Colors and ComplicationDrawable.
-    private var watchFaceColors = WatchFaceColorPalette.convertToWatchFaceColorPalette(
+    private var watchFaceColors = WatchFaceColorPalette.getWatchFaceColorPalette(
         context,
-        watchFaceData.activeColorStyle,
-        watchFaceData.ambientColorStyle
     )
 
     // Initializes paint object for painting the clock hands with default values.
@@ -115,8 +115,8 @@ class DigitalWatchCanvasRenderer(
         }
     }
 
-    override suspend fun createSharedAssets(): AnalogSharedAssets {
-        return AnalogSharedAssets()
+    override suspend fun createSharedAssets(): DigitalSharedAssets {
+        return DigitalSharedAssets()
     }
 
     /*
@@ -175,10 +175,8 @@ class DigitalWatchCanvasRenderer(
             watchFaceData = newWatchFaceData
 
             // Recreates Color and ComplicationDrawable from resource ids.
-            watchFaceColors = WatchFaceColorPalette.convertToWatchFaceColorPalette(
-                context,
-                watchFaceData.activeColorStyle,
-                watchFaceData.ambientColorStyle
+            watchFaceColors = WatchFaceColorPalette.getWatchFaceColorPalette(
+                context
             )
 
             // Applies the user chosen complication color scheme changes. ComplicationDrawables for
@@ -205,7 +203,7 @@ class DigitalWatchCanvasRenderer(
         canvas: Canvas,
         bounds: Rect,
         zonedDateTime: ZonedDateTime,
-        sharedAssets: AnalogSharedAssets
+        sharedAssets: DigitalSharedAssets
     ) {
         canvas.drawColor(renderParameters.highlightLayer!!.backgroundTint)
 
@@ -220,7 +218,7 @@ class DigitalWatchCanvasRenderer(
         canvas: Canvas,
         bounds: Rect,
         zonedDateTime: ZonedDateTime,
-        sharedAssets: AnalogSharedAssets
+        sharedAssets: DigitalSharedAssets
     ) {
         val backgroundColor = if (renderParameters.drawMode == DrawMode.AMBIENT) {
             watchFaceColors.ambientBackgroundColor

@@ -18,6 +18,7 @@ package dev.makuch.simplyTime.data.watchface
 import android.content.Context
 import androidx.annotation.DrawableRes
 import androidx.wear.watchface.complications.rendering.ComplicationDrawable
+import dev.makuch.simplyTime.R
 
 /**
  * Color resources and drawable id needed to render the watch face. Translated from
@@ -46,24 +47,23 @@ data class WatchFaceColorPalette(
         /**
          * Converts [ColorStyleIdAndResourceIds] to [WatchFaceColorPalette].
          */
-        fun convertToWatchFaceColorPalette(
+        fun getWatchFaceColorPalette(
             context: Context,
-            activeColorStyle: ColorStyleIdAndResourceIds,
-            ambientColorStyle: ColorStyleIdAndResourceIds
         ): WatchFaceColorPalette {
             return WatchFaceColorPalette(
                 // Active colors
-                activePrimaryColor = context.getColor(activeColorStyle.primaryColorId),
-                activeSecondaryColor = context.getColor(activeColorStyle.secondaryColorId),
-                activeBackgroundColor = context.getColor(activeColorStyle.backgroundColorId),
-                activeOuterElementColor = context.getColor(activeColorStyle.outerElementColorId),
+                activePrimaryColor = context.getColor(R.color.white_primary_color),
+                activeSecondaryColor = context.getColor(R.color.white_secondary_color),
+                activeBackgroundColor = context.getColor(R.color.white_background_color),
+                activeOuterElementColor = context.getColor(R.color.white_outer_element_color),
+
                 // Complication color style
-                complicationStyleDrawableId = activeColorStyle.complicationStyleDrawableId,
+                complicationStyleDrawableId = R.drawable.complication_white_style,
                 // Ambient colors
-                ambientPrimaryColor = context.getColor(ambientColorStyle.primaryColorId),
-                ambientSecondaryColor = context.getColor(ambientColorStyle.secondaryColorId),
-                ambientBackgroundColor = context.getColor(ambientColorStyle.backgroundColorId),
-                ambientOuterElementColor = context.getColor(ambientColorStyle.outerElementColorId)
+                ambientPrimaryColor = context.getColor(R.color.ambient_primary_color),
+                ambientSecondaryColor = context.getColor(R.color.ambient_secondary_color),
+                ambientBackgroundColor = context.getColor(R.color.ambient_background_color),
+                ambientOuterElementColor = context.getColor(R.color.ambient_outer_element_color)
             )
         }
     }

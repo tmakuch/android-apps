@@ -30,10 +30,10 @@ import dev.makuch.simplyTime.utils.createUserStyleSchema
 
 /**
  * Handles much of the boilerplate needed to implement a watch face (minus rendering code; see
- * [AnalogWatchCanvasRenderer]) including the complications and settings (styles user can change on
+ * [DigitalWatchCanvasRenderer]) including the complications and settings (styles user can change on
  * the watch face).
  */
-class AnalogWatchFaceService : WatchFaceService() {
+class DigitalWatchFaceService : WatchFaceService() {
 
     // Used by Watch Face APIs to construct user setting options and repository.
     override fun createUserStyleSchema(): UserStyleSchema =
@@ -57,7 +57,7 @@ class AnalogWatchFaceService : WatchFaceService() {
         Log.d(TAG, "createWatchFace()")
 
         // Creates class that renders the watch face.
-        val renderer = AnalogWatchCanvasRenderer(
+        val renderer = DigitalWatchCanvasRenderer(
             context = applicationContext,
             surfaceHolder = surfaceHolder,
             watchState = watchState,
@@ -68,12 +68,12 @@ class AnalogWatchFaceService : WatchFaceService() {
 
         // Creates the watch face.
         return WatchFace(
-            watchFaceType = WatchFaceType.ANALOG,
+            watchFaceType = WatchFaceType.DIGITAL,
             renderer = renderer
         )
     }
 
     companion object {
-        const val TAG = "AnalogWatchFaceService"
+        const val TAG = "DigitalWatchFaceService"
     }
 }

@@ -45,6 +45,7 @@ proguard-project.txt
 .project
 .classpath
 .settings/
+.run
 
 # Android Studio/IDEA
 *.iml
