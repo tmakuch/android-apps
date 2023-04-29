@@ -2,7 +2,6 @@ package dev.makuch.simplyTime
 
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Paint
 import android.graphics.Rect
 import android.util.Log
 import android.view.SurfaceHolder
@@ -17,6 +16,7 @@ import androidx.wear.watchface.style.UserStyle
 import androidx.wear.watchface.style.UserStyleSetting
 import dev.makuch.simplyTime.data.watchface.WatchFaceColorPalette
 import dev.makuch.simplyTime.data.watchface.WatchFaceData
+import dev.makuch.simplyTime.data.watchface.WatchFacePaints
 import dev.makuch.simplyTime.utils.SHOW_DIVISION_RING_SETTING
 import dev.makuch.simplyTime.utils.mapDayOfWeek
 import java.time.LocalTime
@@ -61,44 +61,11 @@ class DigitalWatchCanvasRenderer(
     private val topMargin: Float =
         context.resources.getDimensionPixelSize(R.dimen.top_margin).toFloat()
 
-    // Represents all data needed to render the watch face. All value defaults are constants. Only
-    // three values are changeable by the user (color scheme, ticks being rendered, and length of
-    // the minute arm). Those dynamic values are saved in the watch face APIs and we update those
-    // here (in the renderer) through a Kotlin Flow.
     private var watchFaceData: WatchFaceData = WatchFaceData()
-
-    // Converts resource ids into Colors and ComplicationDrawable.
     private var watchFaceColors = WatchFaceColorPalette.getWatchFaceColorPalette(
         context,
     )
-
-    private val textPaint = Paint().apply {
-        isAntiAlias = true
-        textSize = context.resources.getDimensionPixelSize(R.dimen.font_size).toFloat()
-        color = watchFaceColors.activeFrontendColor
-        typeface = context.resources.getFont(R.font.digital)
-    }
-
-    private val ambientTextPaint = Paint().apply {
-        isAntiAlias = true
-        textSize = context.resources.getDimensionPixelSize(R.dimen.font_size).toFloat()
-        color = watchFaceColors.activeFrontendColor
-        typeface = context.resources.getFont(R.font.digital_empty)
-    }
-
-    private val secondaryTextPaint = Paint().apply {
-        isAntiAlias = true
-        textSize = context.resources.getDimensionPixelSize(R.dimen.secondary_font_size).toFloat()
-        color = watchFaceColors.activeFrontendColor
-        typeface = context.resources.getFont(R.font.digital)
-    }
-
-    private val tertiaryTextPaint = Paint().apply {
-        isAntiAlias = true
-        textSize = context.resources.getDimensionPixelSize(R.dimen.tertiary_font_size).toFloat()
-        color = watchFaceColors.activeFrontendColor
-        typeface = context.resources.getFont(R.font.digital)
-    }
+    private var watchFacePaints: WatchFacePaints = WatchFacePaints.getPaints(context, watchFaceColors)
 
     init {
         scope.launch {
@@ -181,7 +148,7 @@ class DigitalWatchCanvasRenderer(
 
         val localTime = zonedDateTime.toLocalTime()
         val isAmbient = renderParameters.drawMode == DrawMode.AMBIENT
-        val heightOffset = textPaint.textSize * fontHeightOffsetModificator
+        val heightOffset = watchFacePaints.textPaint.textSize * fontHeightOffsetModificator
 
         drawMainTime(canvas, bounds, localTime, isAmbient, heightOffset)
         if (!isAmbient) {
@@ -212,11 +179,11 @@ class DigitalWatchCanvasRenderer(
 
         val isAnyOtherHalfOfSecond = localTime.nano > 500000000
 
-        val wholeTimeOffset = textPaint.measureText("$hours:$minutes") / 2
-        val hoursWidth = textPaint.measureText(hours)
-        val colonWidth = textPaint.measureText(":")
+        val wholeTimeOffset = watchFacePaints.textPaint.measureText("$hours:$minutes") / 2
+        val hoursWidth = watchFacePaints.textPaint.measureText(hours)
+        val colonWidth = watchFacePaints.textPaint.measureText(":")
 
-        val fontToUse = if (isAmbient) ambientTextPaint else textPaint
+        val fontToUse = if (isAmbient) watchFacePaints.ambientTextPaint else watchFacePaints.textPaint
 
         canvas.drawText(
             hours,
@@ -252,15 +219,15 @@ class DigitalWatchCanvasRenderer(
 
 
         val yPosition =
-            bounds.centerY().toFloat() + heightOffset - topMargin - secondaryTextPaint.textSize
-        val secondaryColonWidth = secondaryTextPaint.measureText(":")
+            bounds.centerY().toFloat() + heightOffset - topMargin - watchFacePaints.secondaryTextPaint.textSize
+        val secondaryColonWidth = watchFacePaints.secondaryTextPaint.measureText(":")
 
         if (isAnyOtherHalfOfSecond) {
             canvas.drawText(
                 ":",
                 bounds.centerX().toFloat(),
                 yPosition,
-                secondaryTextPaint
+                watchFacePaints.secondaryTextPaint
             )
         }
 
@@ -268,7 +235,7 @@ class DigitalWatchCanvasRenderer(
             seconds,
             bounds.centerX() + secondaryColonWidth,
             yPosition,
-            secondaryTextPaint
+            watchFacePaints.secondaryTextPaint
         )
     }
 
@@ -285,21 +252,18 @@ class DigitalWatchCanvasRenderer(
         canvas.drawText(
             text,
             bounds.width() * 0.3f,
-            bounds.centerY().toFloat() + heightOffset + tertiaryTextPaint.textSize,
-            tertiaryTextPaint
+            bounds.centerY().toFloat() + heightOffset + watchFacePaints.tertiaryTextPaint.textSize,
+            watchFacePaints.tertiaryTextPaint
         )
     }
 
-//
-//    /** Draws the outer circle on the top middle of the given bounds. */
-//    private fun drawTopMiddleCircle(
+
+//    private fun drawDivisionRing(
 //        canvas: Canvas,
 //        bounds: Rect,
 //        radiusFraction: Float,
 //        gapBetweenOuterCircleAndBorderFraction: Float
 //    ) {
-//        outerElementPaint.style = Paint.Style.FILL_AND_STROKE
-//
 //        // X and Y coordinates of the center of the circle.
 //        val centerX = 0.5f * bounds.width().toFloat()
 //        val centerY = bounds.width() * (gapBetweenOuterCircleAndBorderFraction + radiusFraction)
@@ -308,7 +272,7 @@ class DigitalWatchCanvasRenderer(
 //            centerX,
 //            centerY,
 //            radiusFraction * bounds.width(),
-//            outerElementPaint
+//            watchFacePaints.divisionRingPaint
 //        )
 //    }
 
