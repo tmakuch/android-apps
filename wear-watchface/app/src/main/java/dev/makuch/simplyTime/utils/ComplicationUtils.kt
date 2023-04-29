@@ -34,7 +34,7 @@ private const val COMPLICATIONS_BOTTOM_BOUND = 0.6f
 private const val COMPLICATION_LEFT_BOUND = 0.2f
 private const val COMPLICATION_RIGHT_BOUND = 0.4f
 
-private const val DEFAULT_COMPLICATION_STYLE_DRAWABLE_ID = R.drawable.complication_red_style
+private const val DEFAULT_COMPLICATION_STYLE_DRAWABLE_ID = R.drawable.complication_white_style
 
 internal const val COMPLICATION_ID = 100
 
