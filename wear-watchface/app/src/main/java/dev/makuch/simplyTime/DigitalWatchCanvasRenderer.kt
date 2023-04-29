@@ -151,8 +151,12 @@ class DigitalWatchCanvasRenderer(
         val heightOffset = watchFacePaints.textPaint.textSize * fontHeightOffsetModificator
 
         drawMainTime(canvas, bounds, localTime, isAmbient, heightOffset)
-        if (!isAmbient) {
+
+        if (watchFaceData.showDivisionRing) {
             drawDivisionRing(canvas, bounds)
+        }
+
+        if (!isAmbient) {
             drawComplications(canvas, zonedDateTime)
             drawSeconds(canvas, bounds, localTime, heightOffset)
             drawDate(canvas, bounds, zonedDateTime, heightOffset)

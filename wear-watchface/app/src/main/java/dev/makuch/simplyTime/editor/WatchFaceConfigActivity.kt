@@ -21,7 +21,6 @@ import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
 import dev.makuch.simplyTime.databinding.ActivityWatchFaceConfigBinding
-import dev.makuch.simplyTime.utils.COMPLICATION_ID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -70,11 +69,13 @@ class WatchFaceConfigActivity : ComponentActivity() {
         Log.d(TAG, "updateWatchFacePreview: $userStylesAndPreview")
 
         binding.divisionRingSwitch.isChecked = userStylesAndPreview.showDivisionRingEnabled
+
+        binding.divisionRingSwitch.isEnabled = true
     }
 
     fun onClickComplicationButton(view: View) {
         Log.d(TAG, "onClickLeftComplicationButton() $view")
-        stateHolder.setComplication(COMPLICATION_ID)
+        stateHolder.setComplication()
     }
 
     fun onClickDivisionRingSwitch(view: View) {

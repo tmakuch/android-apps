@@ -16,12 +16,7 @@
 package dev.makuch.simplyTime.data.watchface
 
 const val SHOW_DIVISION_RING_DEFAULT = true
-const val BLINK_COLON_DEFAULT = false
 
 data class WatchFaceData(
     val showDivisionRing: Boolean = SHOW_DIVISION_RING_DEFAULT,
-    val hours: Byte = 12,
-    val minutes: Byte = 59,
-    val seconds: Byte = 44,
-    val blinkColon: Boolean = BLINK_COLON_DEFAULT
 )

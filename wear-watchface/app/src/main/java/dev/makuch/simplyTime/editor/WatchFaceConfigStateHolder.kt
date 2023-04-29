@@ -119,17 +119,9 @@ class WatchFaceConfigStateHolder(
         )
     }
 
-    fun setComplication(complicationLocation: Int) {
-        val complicationSlotId = when (complicationLocation) {
-            COMPLICATION_ID -> {
-                COMPLICATION_ID
-            }
-            else -> {
-                return
-            }
-        }
+    fun setComplication() {
         scope.launch(Dispatchers.Main.immediate) {
-            editorSession.openComplicationDataSourceChooser(complicationSlotId)
+            editorSession.openComplicationDataSourceChooser(COMPLICATION_ID)
         }
     }
 
