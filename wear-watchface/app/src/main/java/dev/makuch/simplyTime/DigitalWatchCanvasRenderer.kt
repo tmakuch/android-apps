@@ -180,9 +180,13 @@ class DigitalWatchCanvasRenderer(
 
     // ----- All drawing functions -----
     private fun drawComplications(canvas: Canvas, zonedDateTime: ZonedDateTime) {
-        for ((_, complication) in complicationSlotsManager.complicationSlots) {
-            if (complication.enabled) {
-                complication.render(canvas, zonedDateTime, renderParameters)
+        val isAmbient = renderParameters.drawMode == DrawMode.AMBIENT
+
+        if (!isAmbient) {
+            for ((_, complication) in complicationSlotsManager.complicationSlots) {
+                if (complication.enabled) {
+                    complication.render(canvas, zonedDateTime, renderParameters)
+                }
             }
         }
     }

@@ -14,11 +14,4 @@
     app:textTypeface="sans-serif-condensed"
     app:titleColor="@color/white_90"
     app:titleTypeface="sans-serif-condensed">
-    <ambient
-        app:borderColor="@color/white_50"
-        app:iconColor="@color/white"
-        app:textColor="@color/white"
-        app:titleColor="@color/white_70"
-        app:rangedValuePrimaryColor="@color/white"
-        app:rangedValueSecondaryColor="@color/transparent" />
 </drawable>
