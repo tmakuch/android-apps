@@ -17,7 +17,8 @@ import androidx.wear.watchface.style.UserStyleSetting
 import dev.makuch.simplyTime.data.watchface.WatchFaceColorPalette
 import dev.makuch.simplyTime.data.watchface.WatchFaceData
 import dev.makuch.simplyTime.data.watchface.WatchFacePaints
-import dev.makuch.simplyTime.utils.SHOW_DIVISION_RING_SETTING
+import dev.makuch.simplyTime.utils.SHOW_ON_AMBIENT_SETTING
+import dev.makuch.simplyTime.utils.SHOW_RING_SETTING
 import dev.makuch.simplyTime.utils.mapDayOfWeek
 import java.time.LocalTime
 import java.time.ZonedDateTime
@@ -65,7 +66,8 @@ class DigitalWatchCanvasRenderer(
     private var watchFaceColors = WatchFaceColorPalette.getWatchFaceColorPalette(
         context,
     )
-    private var watchFacePaints: WatchFacePaints = WatchFacePaints.getPaints(context, watchFaceColors)
+    private var watchFacePaints: WatchFacePaints =
+        WatchFacePaints.getPaints(context, watchFaceColors)
 
     init {
         scope.launch {
@@ -91,12 +93,20 @@ class DigitalWatchCanvasRenderer(
         // Loops through user style and applies new values to watchFaceData.
         for (options in userStyle) {
             when (options.key.id.toString()) {
-                SHOW_DIVISION_RING_SETTING -> {
+                SHOW_RING_SETTING -> {
                     val booleanValue = options.value as
                         UserStyleSetting.BooleanUserStyleSetting.BooleanOption
 
                     newWatchFaceData = newWatchFaceData.copy(
-                        showDivisionRing = booleanValue.value
+                        showRing = booleanValue.value
+                    )
+                }
+                SHOW_ON_AMBIENT_SETTING -> {
+                    val booleanValue = options.value as
+                        UserStyleSetting.BooleanUserStyleSetting.BooleanOption
+
+                    newWatchFaceData = newWatchFaceData.copy(
+                        showOnAmbient = booleanValue.value
                     )
                 }
             }
@@ -152,8 +162,8 @@ class DigitalWatchCanvasRenderer(
 
         drawMainTime(canvas, bounds, localTime, isAmbient, heightOffset)
 
-        if (watchFaceData.showDivisionRing) {
-            drawDivisionRing(canvas, bounds)
+        if (watchFaceData.showRing && (!isAmbient || watchFaceData.showOnAmbient)) {
+            drawRing(canvas, bounds)
         }
 
         if (!isAmbient) {
@@ -188,7 +198,8 @@ class DigitalWatchCanvasRenderer(
         val hoursWidth = watchFacePaints.textPaint.measureText(hours)
         val colonWidth = watchFacePaints.textPaint.measureText(":")
 
-        val fontToUse = if (isAmbient) watchFacePaints.ambientTextPaint else watchFacePaints.textPaint
+        val fontToUse =
+            if (isAmbient) watchFacePaints.ambientTextPaint else watchFacePaints.textPaint
 
         canvas.drawText(
             hours,
@@ -224,7 +235,8 @@ class DigitalWatchCanvasRenderer(
 
 
         val yPosition =
-            bounds.centerY().toFloat() + heightOffset - topMargin - watchFacePaints.secondaryTextPaint.textSize
+            bounds.centerY()
+                .toFloat() + heightOffset - topMargin - watchFacePaints.secondaryTextPaint.textSize
         val secondaryColonWidth = watchFacePaints.secondaryTextPaint.measureText(":")
 
         if (isAnyOtherHalfOfSecond) {
@@ -263,7 +275,7 @@ class DigitalWatchCanvasRenderer(
     }
 
 
-    private fun drawDivisionRing(
+    private fun drawRing(
         canvas: Canvas,
         bounds: Rect,
     ) {

@@ -8,4 +8,8 @@
     <style name="Widget.WatchFace.Button" parent="Widget.MaterialComponents.Button">
         <item name="backgroundTint">@color/background_color</item>
     </style>
+
+    <style name="Disableable">
+        <item name="textColor">@color/primary_color_with_disable</item>
+    </style>
 </resources>

@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary_color">@android:color/white</color><!--#B3FFFFFF ?-->
-    <color name="secondary_color">#CCCCCC</color> <!-- do I need it actually? -->
-    <color name="ambient_primary_color">@android:color/white</color> <!--#B3FFFFFF bit darker for ambient?-->
+    <color name="primary_color">@android:color/white</color>
+    <color name="secondary_color">#FF777777</color>
+    <color name="ambient_primary_color">@android:color/white</color>
     <color name="background_color">@android:color/black</color>
     <color name="division_ring_color">#FFFF6A13</color>
-    <color name="highlight_color">#4DFFFFFF</color>
 </resources>
 

@@ -42,7 +42,8 @@ class WatchFaceConfigActivity : ComponentActivity() {
         setContentView(binding.root)
 
         // Disable widgets until data loads and values are set.
-        binding.divisionRingSwitch.isEnabled = false
+        binding.showRingSwitch.isEnabled = false
+        binding.showOnAmbientSwitch.isEnabled = false
 
         lifecycleScope.launch(Dispatchers.Main.immediate) {
             stateHolder.uiState
@@ -68,9 +69,11 @@ class WatchFaceConfigActivity : ComponentActivity() {
     ) {
         Log.d(TAG, "updateWatchFacePreview: $userStylesAndPreview")
 
-        binding.divisionRingSwitch.isChecked = userStylesAndPreview.showDivisionRingEnabled
+        binding.showRingSwitch.isChecked = userStylesAndPreview.showRing
+        binding.showOnAmbientSwitch.isChecked = userStylesAndPreview.showOnAmbient
 
-        binding.divisionRingSwitch.isEnabled = true
+        binding.showRingSwitch.isEnabled = true
+        binding.showOnAmbientSwitch.isEnabled = userStylesAndPreview.showRing
     }
 
     fun onClickComplicationButton(view: View) {
@@ -78,9 +81,16 @@ class WatchFaceConfigActivity : ComponentActivity() {
         stateHolder.setComplication()
     }
 
-    fun onClickDivisionRingSwitch(view: View) {
-        Log.d(TAG, "onClickTicksEnabledSwitch() $view")
-        stateHolder.setDivisionRing(binding.divisionRingSwitch.isChecked)
+    fun onClickShowRingSwitch(view: View) {
+        Log.d(TAG, "onClickDivisionRingSwitch() $view")
+        stateHolder.setDivisionRing(binding.showRingSwitch.isChecked)
+
+        binding.showOnAmbientSwitch.isEnabled = binding.showRingSwitch.isChecked
+    }
+
+    fun onClickShowOnAmbientSwitch(view: View) {
+        Log.d(TAG, "onClickDivisionRingOnAmbientSwitch() $view")
+        stateHolder.setDivisionRingOnAmbient(binding.showOnAmbientSwitch.isChecked)
     }
 
     companion object {

@@ -1,12 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- generic -->
     <string name="app_name" translatable="false">Simply Time on WearOs</string>
     <string name="analog_watch_face_name" translatable="false">Digital Simply Time</string>
-    <string name="show_div_ring_setting">Show Division Ring</string>
-    <string name="show_div_ring_setting_description">Show division ring protocol activation</string>
+    <string name="title_activity_watch_face_config">Config</string>
+
+    <!-- setting but complication, so no need for custom setting -->
     <string name="set_complication_label">Set\nComplication</string>
     <string name="set_complication_label_content_description">Button to change the complication on the watchface.</string>
+
+    <!-- custom setting -->
     <string name="activity_config_division_ring_label">Show Division\nRing</string>
     <string name="activity_config_division_ring_switch_content_description">Displays or hides the outer ring for the watch face.</string>
-    <string name="title_activity_watch_face_config">Config</string>
+    <string name="show_div_ring_setting">Show Division Ring</string>
+    <string name="show_div_ring_setting_description">Show division ring protocol activation</string>
+
+    <!-- custom setting -->
+    <string name="activity_config_division_ring_on_ambient_label">Show Ring\nOn Ambient</string>
+    <string name="activity_config_division_ring_on_ambient_switch_content_description">Is ring visible on ambient screen?</string>
+    <string name="show_div_ring_on_ambient_setting">Show Ring on Ambient</string>
+    <string name="show_div_ring_on_ambient_setting_description">Is ring visible on ambient screen?</string>
 </resources>

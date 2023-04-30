@@ -7,7 +7,8 @@ import androidx.wear.watchface.style.UserStyle
 import androidx.wear.watchface.style.UserStyleSchema
 import androidx.wear.watchface.style.UserStyleSetting
 import dev.makuch.simplyTime.utils.COMPLICATION_ID
-import dev.makuch.simplyTime.utils.SHOW_DIVISION_RING_SETTING
+import dev.makuch.simplyTime.utils.SHOW_ON_AMBIENT_SETTING
+import dev.makuch.simplyTime.utils.SHOW_RING_SETTING
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,7 +24,8 @@ class WatchFaceConfigStateHolder(
 ) {
     private lateinit var editorSession: EditorSession
 
-    private lateinit var showDivisionRing: UserStyleSetting.BooleanUserStyleSetting
+    private lateinit var showRing: UserStyleSetting.BooleanUserStyleSetting
+    private lateinit var showOnAmbient: UserStyleSetting.BooleanUserStyleSetting
 
     val uiState: StateFlow<EditWatchFaceUiState> =
         flow<EditWatchFaceUiState> {
@@ -51,8 +53,11 @@ class WatchFaceConfigStateHolder(
         // Loops through user styles and retrieves user editable styles.
         for (setting in userStyleSchema.userStyleSettings) {
             when (setting.id.toString()) {
-                SHOW_DIVISION_RING_SETTING -> {
-                    showDivisionRing = setting as UserStyleSetting.BooleanUserStyleSetting
+                SHOW_RING_SETTING -> {
+                    showRing = setting as UserStyleSetting.BooleanUserStyleSetting
+                }
+                SHOW_ON_AMBIENT_SETTING -> {
+                    showOnAmbient = setting as UserStyleSetting.BooleanUserStyleSetting
                 }
             }
         }
@@ -64,12 +69,16 @@ class WatchFaceConfigStateHolder(
         Log.d(TAG, "updatesWatchFacePreview()")
 
         val showDivisionRingStyle =
-            userStyle[showDivisionRing] as UserStyleSetting.BooleanUserStyleSetting.BooleanOption
+            userStyle[showRing] as UserStyleSetting.BooleanUserStyleSetting.BooleanOption
+
+        val showDivisionRingOnAmbientStyle =
+            userStyle[showOnAmbient] as UserStyleSetting.BooleanUserStyleSetting.BooleanOption
 
         Log.d(TAG, "/new values: $showDivisionRingStyle")
 
         return UserStylesAndPreview(
-            showDivisionRingEnabled = showDivisionRingStyle.value
+            showRing = showDivisionRingStyle.value,
+            showOnAmbient = showDivisionRingOnAmbientStyle.value
         )
     }
 
@@ -81,7 +90,14 @@ class WatchFaceConfigStateHolder(
 
     fun setDivisionRing(enabled: Boolean) {
         setUserStyleOption(
-            showDivisionRing,
+            showRing,
+            UserStyleSetting.BooleanUserStyleSetting.BooleanOption.from(enabled)
+        )
+    }
+
+    fun setDivisionRingOnAmbient(enabled: Boolean) {
+        setUserStyleOption(
+            showOnAmbient,
             UserStyleSetting.BooleanUserStyleSetting.BooleanOption.from(enabled)
         )
     }
@@ -106,7 +122,8 @@ class WatchFaceConfigStateHolder(
     }
 
     data class UserStylesAndPreview(
-        val showDivisionRingEnabled: Boolean
+        val showRing: Boolean,
+        val showOnAmbient: Boolean
     )
 
     companion object {
