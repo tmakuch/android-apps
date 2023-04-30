@@ -14,13 +14,16 @@ import androidx.wear.watchface.complications.rendering.ComplicationDrawable
 import androidx.wear.watchface.style.CurrentUserStyleRepository
 import androidx.wear.watchface.style.UserStyle
 import androidx.wear.watchface.style.UserStyleSetting
-import dev.makuch.simplyTime.data.WatchFaceColorPalette
-import dev.makuch.simplyTime.data.WatchFaceData
-import dev.makuch.simplyTime.data.WatchFacePaints
+import dev.makuch.simplyTime.data.ColorPalette
+import dev.makuch.simplyTime.data.SettingsData
+import dev.makuch.simplyTime.data.Paints
 import dev.makuch.simplyTime.utils.SHOW_ON_AMBIENT_SETTING
 import dev.makuch.simplyTime.utils.SHOW_RING_SETTING
-import dev.makuch.simplyTime.utils.mapDayOfWeek
-import java.time.LocalTime
+import dev.makuch.simplyTime.utils.drawComplications
+import dev.makuch.simplyTime.utils.drawDate
+import dev.makuch.simplyTime.utils.drawMainTime
+import dev.makuch.simplyTime.utils.drawRing
+import dev.makuch.simplyTime.utils.drawSeconds
 import java.time.ZonedDateTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,13 +31,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
-// Default for how long each frame is displayed at expected frame rate.
 private const val FRAME_PERIOD_MS_DEFAULT: Long = 16L
 
-/**
- * Renders watch face via data in Room database. Also, updates watch face state based on setting
- * changes by user via [userStyleRepository.addUserStyleListener()].
- */
 class DigitalWatchCanvasRenderer(
     private val context: Context,
     surfaceHolder: SurfaceHolder,
@@ -55,24 +53,20 @@ class DigitalWatchCanvasRenderer(
         }
     }
 
-    private val scope: CoroutineScope =
-        CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     private val fontHeightOffsetModificator: Float = (1 / 2.8).toFloat()
     private val topMargin: Float =
         context.resources.getDimensionPixelSize(R.dimen.top_margin).toFloat()
 
-    private var watchFaceData: WatchFaceData = WatchFaceData()
-    private var watchFaceColors = WatchFaceColorPalette.getWatchFaceColorPalette(
-        context,
-    )
-    private var watchFacePaints: WatchFacePaints =
-        WatchFacePaints.getPaints(context, watchFaceColors)
+    private var settingsData: SettingsData = SettingsData()
+    private var colors = ColorPalette.getColorPalette(context)
+    private var paints: Paints = Paints.getPaints(context, colors)
 
     init {
         scope.launch {
             currentUserStyleRepository.userStyle.collect { userStyle ->
-                updateWatchFaceData(userStyle)
+                updateSettingsData(userStyle)
             }
         }
     }
@@ -81,14 +75,10 @@ class DigitalWatchCanvasRenderer(
         return DigitalSharedAssets()
     }
 
-    /*
-     * Triggered when the user makes changes to the watch face through the settings activity. The
-     * function is called by a flow.
-     */
-    private fun updateWatchFaceData(userStyle: UserStyle) {
+    private fun updateSettingsData(userStyle: UserStyle) {
         Log.d(TAG, "updateWatchFace(): $userStyle")
 
-        var newWatchFaceData: WatchFaceData = watchFaceData
+        var newSettingsData: SettingsData = settingsData
 
         // Loops through user style and applies new values to watchFaceData.
         for (options in userStyle) {
@@ -97,29 +87,29 @@ class DigitalWatchCanvasRenderer(
                     val booleanValue = options.value as
                         UserStyleSetting.BooleanUserStyleSetting.BooleanOption
 
-                    newWatchFaceData = newWatchFaceData.copy(
+                    newSettingsData = newSettingsData.copy(
                         showRing = booleanValue.value
                     )
                 }
+
                 SHOW_ON_AMBIENT_SETTING -> {
                     val booleanValue = options.value as
                         UserStyleSetting.BooleanUserStyleSetting.BooleanOption
 
-                    newWatchFaceData = newWatchFaceData.copy(
+                    newSettingsData = newSettingsData.copy(
                         showOnAmbient = booleanValue.value
                     )
                 }
             }
         }
 
-        // Only updates if something changed.
-        if (watchFaceData != newWatchFaceData) {
-            watchFaceData = newWatchFaceData
+        if (settingsData != newSettingsData) {
+            settingsData = newSettingsData
 
             for ((_, complication) in complicationSlotsManager.complicationSlots) {
                 ComplicationDrawable.getDrawable(
                     context,
-                    watchFaceColors.complicationStyleDrawableId
+                    colors.complicationStyleDrawableId
                 )?.let {
                     (complication.renderer as CanvasComplicationDrawable).drawable = it
                 }
@@ -129,7 +119,7 @@ class DigitalWatchCanvasRenderer(
 
     override fun onDestroy() {
         Log.d(TAG, "onDestroy()")
-        scope.cancel("AnalogWatchCanvasRenderer scope clear() request")
+        scope.cancel("DigitalWatchCanvasRenderer scope clear() request")
         super.onDestroy()
     }
 
@@ -154,137 +144,23 @@ class DigitalWatchCanvasRenderer(
         zonedDateTime: ZonedDateTime,
         sharedAssets: DigitalSharedAssets
     ) {
-        canvas.drawColor(watchFaceColors.backgroundColor)
+        canvas.drawColor(colors.backgroundColor)
 
         val localTime = zonedDateTime.toLocalTime()
         val isAmbient = renderParameters.drawMode == DrawMode.AMBIENT
-        val heightOffset = watchFacePaints.textPaint.textSize * fontHeightOffsetModificator
+        val heightOffset = paints.textPaint.textSize * fontHeightOffsetModificator
 
-        drawMainTime(canvas, bounds, localTime, isAmbient, heightOffset)
+        drawMainTime(canvas, bounds, localTime, paints, heightOffset, isAmbient)
 
-        if (watchFaceData.showRing && (!isAmbient || watchFaceData.showOnAmbient)) {
-            drawRing(canvas, bounds)
+        if (settingsData.showRing && (!isAmbient || settingsData.showOnAmbient)) {
+            drawRing(canvas, bounds, paints)
         }
 
         if (!isAmbient) {
-            drawComplications(canvas, zonedDateTime)
-            drawSeconds(canvas, bounds, localTime, heightOffset)
-            drawDate(canvas, bounds, zonedDateTime, heightOffset)
+            drawComplications(canvas, renderParameters, zonedDateTime, complicationSlotsManager)
+            drawSeconds(canvas, bounds, localTime, paints, heightOffset, topMargin)
+            drawDate(canvas, bounds, zonedDateTime, paints, heightOffset)
         }
-    }
-
-    // ----- All drawing functions -----
-    private fun drawComplications(canvas: Canvas, zonedDateTime: ZonedDateTime) {
-        for ((_, complication) in complicationSlotsManager.complicationSlots) {
-            if (complication.enabled) {
-                complication.render(canvas, zonedDateTime, renderParameters)
-            }
-        }
-    }
-
-    private fun drawMainTime(
-        canvas: Canvas,
-        bounds: Rect,
-        localTime: LocalTime,
-        isAmbient: Boolean,
-        heightOffset: Float
-    ) {
-        val minutes = String.format("%02d", localTime.minute)
-        val hours = localTime.hour.toString()
-
-        val isAnyOtherHalfOfSecond = localTime.nano > 500000000
-
-        val wholeTimeOffset = watchFacePaints.textPaint.measureText("$hours:$minutes") / 2
-        val hoursWidth = watchFacePaints.textPaint.measureText(hours)
-        val colonWidth = watchFacePaints.textPaint.measureText(":")
-
-        val fontToUse =
-            if (isAmbient) watchFacePaints.ambientTextPaint else watchFacePaints.textPaint
-
-        canvas.drawText(
-            hours,
-            bounds.centerX() - wholeTimeOffset,
-            bounds.centerY().toFloat() + heightOffset,
-            fontToUse
-        )
-        if (isAmbient || isAnyOtherHalfOfSecond) {
-            canvas.drawText(
-                ":",
-                bounds.centerX() - wholeTimeOffset + hoursWidth,
-                bounds.centerY().toFloat() + heightOffset,
-                fontToUse
-            )
-        }
-        canvas.drawText(
-            minutes,
-            bounds.centerX() - wholeTimeOffset + hoursWidth + colonWidth,
-            bounds.centerY().toFloat() + heightOffset,
-            fontToUse
-        )
-    }
-
-    private fun drawSeconds(
-        canvas: Canvas,
-        bounds: Rect,
-        localTime: LocalTime,
-        heightOffset: Float
-    ) {
-        val seconds = String.format("%02d", localTime.second)
-
-        val isAnyOtherHalfOfSecond = localTime.nano > 500000000
-
-
-        val yPosition =
-            bounds.centerY()
-                .toFloat() + heightOffset - topMargin - watchFacePaints.secondaryTextPaint.textSize
-        val secondaryColonWidth = watchFacePaints.secondaryTextPaint.measureText(":")
-
-        if (isAnyOtherHalfOfSecond) {
-            canvas.drawText(
-                ":",
-                bounds.centerX().toFloat(),
-                yPosition,
-                watchFacePaints.secondaryTextPaint
-            )
-        }
-
-        canvas.drawText(
-            seconds,
-            bounds.centerX() + secondaryColonWidth,
-            yPosition,
-            watchFacePaints.secondaryTextPaint
-        )
-    }
-
-    private fun drawDate(
-        canvas: Canvas,
-        bounds: Rect,
-        zonedDateTime: ZonedDateTime,
-        heightOffset: Float
-    ) {
-        val dayOfMonth = zonedDateTime.dayOfMonth
-        val dayOfWeek = mapDayOfWeek(zonedDateTime.dayOfWeek)
-        val text = "$dayOfWeek.$dayOfMonth"
-
-        canvas.drawText(
-            text,
-            bounds.width() * 0.3f,
-            bounds.centerY().toFloat() + heightOffset + watchFacePaints.tertiaryTextPaint.textSize,
-            watchFacePaints.tertiaryTextPaint
-        )
-    }
-
-
-    private fun drawRing(
-        canvas: Canvas,
-        bounds: Rect,
-    ) {
-        canvas.drawCircle(
-            bounds.exactCenterX(),
-            bounds.exactCenterY(),
-            bounds.width().toFloat() / 2,
-            watchFacePaints.divisionRingPaint
-        )
     }
 
     companion object {

@@ -21,18 +21,6 @@ private const val COMPLICATION_RIGHT_BOUND = 0.455f
 
 internal const val COMPLICATION_ID = 100
 
-sealed class ComplicationConfig(val id: Int, val supportedTypes: List<ComplicationType>) {
-    object Complication : ComplicationConfig(
-        COMPLICATION_ID,
-        listOf(
-            ComplicationType.RANGED_VALUE,
-            ComplicationType.MONOCHROMATIC_IMAGE,
-            ComplicationType.SHORT_TEXT,
-            ComplicationType.SMALL_IMAGE
-        )
-    )
-}
-
 fun createComplicationSlotManager(
     context: Context,
     currentUserStyleRepository: CurrentUserStyleRepository,
@@ -48,9 +36,14 @@ fun createComplicationSlotManager(
         }
 
     val complication = ComplicationSlot.createRoundRectComplicationSlotBuilder(
-        id = ComplicationConfig.Complication.id,
+        id = COMPLICATION_ID,
         canvasComplicationFactory = defaultCanvasComplicationFactory,
-        supportedTypes = ComplicationConfig.Complication.supportedTypes,
+        supportedTypes = listOf(
+            ComplicationType.RANGED_VALUE,
+            ComplicationType.MONOCHROMATIC_IMAGE,
+            ComplicationType.SHORT_TEXT,
+            ComplicationType.SMALL_IMAGE
+        ),
         defaultDataSourcePolicy = DefaultComplicationDataSourcePolicy(
             SystemDataSources.DATA_SOURCE_DAY_OF_WEEK,
             ComplicationType.SHORT_TEXT

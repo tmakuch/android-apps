@@ -5,6 +5,8 @@ import android.util.Log
 import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
+import dev.makuch.simplyTime.data.SettingsProps
+import dev.makuch.simplyTime.data.SettingsUIState
 import dev.makuch.simplyTime.databinding.ActivityWatchFaceConfigBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -17,65 +19,61 @@ class WatchFaceConfigActivity : ComponentActivity() {
         )
     }
 
-    private lateinit var binding: ActivityWatchFaceConfigBinding
+    private lateinit var uiRef: ActivityWatchFaceConfigBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate()")
 
-        binding = ActivityWatchFaceConfigBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        uiRef = ActivityWatchFaceConfigBinding.inflate(layoutInflater)
+        setContentView(uiRef.root)
 
-        // Disable widgets until data loads and values are set.
-        binding.showRingSwitch.isEnabled = false
-        binding.showOnAmbientSwitch.isEnabled = false
+        uiRef.showRingSwitch.isEnabled = false
+        uiRef.showOnAmbientSwitch.isEnabled = false
 
         lifecycleScope.launch(Dispatchers.Main.immediate) {
             stateHolder.uiState
-                .collect { uiState: WatchFaceConfigStateHolder.EditWatchFaceUiState ->
+                .collect { uiState: SettingsUIState ->
                     when (uiState) {
-                        is WatchFaceConfigStateHolder.EditWatchFaceUiState.Loading -> {
+                        is SettingsUIState.Loading -> {
                             Log.d(TAG, "StateFlow Loading: ${uiState.message}")
                         }
-                        is WatchFaceConfigStateHolder.EditWatchFaceUiState.Success -> {
+                        is SettingsUIState.Success -> {
                             Log.d(TAG, "StateFlow Success.")
-                            updateWatchFacePreview(uiState.userStylesAndPreview)
-                        }
-                        is WatchFaceConfigStateHolder.EditWatchFaceUiState.Error -> {
-                            Log.e(TAG, "Flow error: ${uiState.exception}")
+                            updateSettingsUI(uiState.props)
                         }
                     }
                 }
         }
     }
 
-    private fun updateWatchFacePreview(
-        userStylesAndPreview: WatchFaceConfigStateHolder.UserStylesAndPreview
+    private fun updateSettingsUI(
+        props: SettingsProps
     ) {
-        Log.d(TAG, "updateWatchFacePreview: $userStylesAndPreview")
+        Log.d(TAG, "updateSettingsUI: $props")
 
-        binding.showRingSwitch.isChecked = userStylesAndPreview.showRing
-        binding.showOnAmbientSwitch.isChecked = userStylesAndPreview.showOnAmbient
+        uiRef.showRingSwitch.isChecked = props.showRing
+        uiRef.showOnAmbientSwitch.isChecked = props.showOnAmbient
 
-        binding.showRingSwitch.isEnabled = true
-        binding.showOnAmbientSwitch.isEnabled = userStylesAndPreview.showRing
+        uiRef.showRingSwitch.isEnabled = true
+        uiRef.showOnAmbientSwitch.isEnabled = props.showRing
     }
 
-    fun onClickComplicationButton(view: View) {
-        Log.d(TAG, "onClickLeftComplicationButton() $view")
+    fun handleComplicationSettingClick(view: View) {
+        Log.d(TAG, "handleComplicationSettingClick() $view")
         stateHolder.setComplication()
     }
 
-    fun onClickShowRingSwitch(view: View) {
-        Log.d(TAG, "onClickDivisionRingSwitch() $view")
-        stateHolder.setDivisionRing(binding.showRingSwitch.isChecked)
+    fun handleShowRingSettingClick(view: View) {
+        Log.d(TAG, "handleShowRingSettingClick() $view")
+        stateHolder.setShowRing(uiRef.showRingSwitch.isChecked)
 
-        binding.showOnAmbientSwitch.isEnabled = binding.showRingSwitch.isChecked
+        uiRef.showOnAmbientSwitch.isEnabled = uiRef.showRingSwitch.isChecked
     }
 
-    fun onClickShowOnAmbientSwitch(view: View) {
-        Log.d(TAG, "onClickDivisionRingOnAmbientSwitch() $view")
-        stateHolder.setDivisionRingOnAmbient(binding.showOnAmbientSwitch.isChecked)
+    fun handleShowOnAmbientSettingClick(view: View) {
+        Log.d(TAG, "handleShowOnAmbientSettingClick() $view")
+        stateHolder.setShowOnAmbient(uiRef.showOnAmbientSwitch.isChecked)
     }
 
     companion object {

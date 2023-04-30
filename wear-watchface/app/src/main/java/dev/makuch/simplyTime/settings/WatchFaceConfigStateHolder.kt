@@ -6,6 +6,8 @@ import androidx.wear.watchface.editor.EditorSession
 import androidx.wear.watchface.style.UserStyle
 import androidx.wear.watchface.style.UserStyleSchema
 import androidx.wear.watchface.style.UserStyleSetting
+import dev.makuch.simplyTime.data.SettingsProps
+import dev.makuch.simplyTime.data.SettingsUIState
 import dev.makuch.simplyTime.utils.COMPLICATION_ID
 import dev.makuch.simplyTime.utils.SHOW_ON_AMBIENT_SETTING
 import dev.makuch.simplyTime.utils.SHOW_RING_SETTING
@@ -27,18 +29,18 @@ class WatchFaceConfigStateHolder(
     private lateinit var showRing: UserStyleSetting.BooleanUserStyleSetting
     private lateinit var showOnAmbient: UserStyleSetting.BooleanUserStyleSetting
 
-    val uiState: StateFlow<EditWatchFaceUiState> =
-        flow<EditWatchFaceUiState> {
+    val uiState: StateFlow<SettingsUIState> =
+        flow<SettingsUIState> {
             editorSession = EditorSession.createOnWatchEditorSession(
                 activity = activity
             )
 
-            extractsUserStyles(editorSession.userStyleSchema)
+            initSettingsPropsOnClass(editorSession.userStyleSchema)
 
             editorSession.userStyle.collect { userStyle ->
                 emit(
-                    EditWatchFaceUiState.Success(
-                        getConfigData(userStyle)
+                    SettingsUIState.Success(
+                        getCurrentSettingsProps(userStyle)
                     )
                 )
             }
@@ -46,11 +48,10 @@ class WatchFaceConfigStateHolder(
             .stateIn(
                 scope + Dispatchers.Main.immediate,
                 SharingStarted.Eagerly,
-                EditWatchFaceUiState.Loading("Initializing")
+                SettingsUIState.Loading("Initializing")
             )
 
-    private fun extractsUserStyles(userStyleSchema: UserStyleSchema) {
-        // Loops through user styles and retrieves user editable styles.
+    private fun initSettingsPropsOnClass(userStyleSchema: UserStyleSchema) {
         for (setting in userStyleSchema.userStyleSettings) {
             when (setting.id.toString()) {
                 SHOW_RING_SETTING -> {
@@ -63,9 +64,9 @@ class WatchFaceConfigStateHolder(
         }
     }
 
-    private fun getConfigData(
+    private fun getCurrentSettingsProps(
         userStyle: UserStyle
-    ): UserStylesAndPreview {
+    ): SettingsProps {
         Log.d(TAG, "updatesWatchFacePreview()")
 
         val showDivisionRingStyle =
@@ -76,7 +77,7 @@ class WatchFaceConfigStateHolder(
 
         Log.d(TAG, "/new values: $showDivisionRingStyle")
 
-        return UserStylesAndPreview(
+        return SettingsProps(
             showRing = showDivisionRingStyle.value,
             showOnAmbient = showDivisionRingOnAmbientStyle.value
         )
@@ -88,21 +89,21 @@ class WatchFaceConfigStateHolder(
         }
     }
 
-    fun setDivisionRing(enabled: Boolean) {
-        setUserStyleOption(
+    fun setShowRing(enabled: Boolean) {
+        setSettingsProp(
             showRing,
             UserStyleSetting.BooleanUserStyleSetting.BooleanOption.from(enabled)
         )
     }
 
-    fun setDivisionRingOnAmbient(enabled: Boolean) {
-        setUserStyleOption(
+    fun setShowOnAmbient(enabled: Boolean) {
+        setSettingsProp(
             showOnAmbient,
             UserStyleSetting.BooleanUserStyleSetting.BooleanOption.from(enabled)
         )
     }
 
-    private fun setUserStyleOption(
+    private fun setSettingsProp(
         userStyleSetting: UserStyleSetting,
         userStyleOption: UserStyleSetting.Option
     ) {
@@ -114,17 +115,6 @@ class WatchFaceConfigStateHolder(
         mutableUserStyle[userStyleSetting] = userStyleOption
         editorSession.userStyle.value = mutableUserStyle.toUserStyle()
     }
-
-    sealed class EditWatchFaceUiState {
-        data class Success(val userStylesAndPreview: UserStylesAndPreview) : EditWatchFaceUiState()
-        data class Loading(val message: String) : EditWatchFaceUiState()
-        data class Error(val exception: Throwable) : EditWatchFaceUiState()
-    }
-
-    data class UserStylesAndPreview(
-        val showRing: Boolean,
-        val showOnAmbient: Boolean
-    )
 
     companion object {
         private const val TAG = "WatchFaceConfigStateHolder"

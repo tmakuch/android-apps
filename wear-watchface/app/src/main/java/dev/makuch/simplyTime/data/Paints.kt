@@ -4,7 +4,7 @@ import android.content.Context
 import android.graphics.Paint
 import dev.makuch.simplyTime.R
 
-data class WatchFacePaints(
+data class Paints(
     val textPaint: Paint,
     val ambientTextPaint: Paint,
     val secondaryTextPaint: Paint,
@@ -14,9 +14,9 @@ data class WatchFacePaints(
     companion object {
         fun getPaints(
             context: Context,
-            watchFaceColors: WatchFaceColorPalette
-        ): WatchFacePaints {
-            return WatchFacePaints(
+            watchFaceColors: ColorPalette
+        ): Paints {
+            return Paints(
                 textPaint = Paint().apply {
                     isAntiAlias = true
                     textSize = context.resources.getDimensionPixelSize(R.dimen.font_size).toFloat()

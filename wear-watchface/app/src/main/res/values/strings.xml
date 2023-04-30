@@ -2,7 +2,7 @@
 <resources>
     <!-- generic -->
     <string name="app_name" translatable="false">Simply Time on WearOs</string>
-    <string name="analog_watch_face_name" translatable="false">Digital Simply Time</string>
+    <string name="digital_watch_face_name" translatable="false">Digital Simply Time</string>
     <string name="title_activity_watch_face_config">Config</string>
 
     <!-- setting but complication, so no need for custom setting -->
