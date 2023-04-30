@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- generic -->
+    <!-- android manifest strings -->
     <string name="app_name" translatable="false">Simply Time on WearOs</string>
     <string name="digital_watch_face_name" translatable="false">Digital Simply Time</string>
-    <string name="title_activity_watch_face_config">Config</string>
+    <string name="settings_activity_label">Config</string>
 
-    <!-- setting but complication, so no need for custom setting -->
+    <!-- complication setting //complication so no need for custom setting -->
     <string name="set_complication_label">Set\nComplication</string>
     <string name="set_complication_label_content_description">Button to change the complication on the watchface.</string>
 
-    <!-- custom setting -->
-    <string name="activity_config_division_ring_label">Show Division\nRing</string>
-    <string name="activity_config_division_ring_switch_content_description">Displays or hides the outer ring for the watch face.</string>
+    <!-- show div ring setting -->
+    <string name="settings_division_ring_label">Show Division\nRing</string>
+    <string name="settings_division_ring_description">Displays or hides the outer ring for the watch face.</string>
     <string name="show_div_ring_setting">Show Division Ring</string>
     <string name="show_div_ring_setting_description">Show division ring protocol activation</string>
 
-    <!-- custom setting -->
-    <string name="activity_config_division_ring_on_ambient_label">Show Ring\nOn Ambient</string>
-    <string name="activity_config_division_ring_on_ambient_switch_content_description">Is ring visible on ambient screen?</string>
-    <string name="show_div_ring_on_ambient_setting">Show Ring on Ambient</string>
-    <string name="show_div_ring_on_ambient_setting_description">Is ring visible on ambient screen?</string>
+    <!-- show on ambient setting -->
+    <string name="settings_on_ambient_label">Show Ring\nOn Ambient</string>
+    <string name="settings_on_ambient_description">Is ring visible on ambient screen?</string>
+    <string name="show_on_ambient_setting">Show Ring on Ambient</string>
+    <string name="show_on_ambient_setting_description">Is ring visible on ambient screen?</string>
 </resources>

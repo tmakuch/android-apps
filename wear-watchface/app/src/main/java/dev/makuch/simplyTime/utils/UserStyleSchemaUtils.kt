@@ -25,8 +25,8 @@ fun createUserStyleSchema(context: Context): UserStyleSchema {
     val showOnAmbientSetting = UserStyleSetting.BooleanUserStyleSetting(
         UserStyleSetting.Id(SHOW_ON_AMBIENT_SETTING),
         context.resources,
-        R.string.show_div_ring_on_ambient_setting,
-        R.string.show_div_ring_on_ambient_setting_description,
+        R.string.show_on_ambient_setting,
+        R.string.show_on_ambient_setting_description,
         null,
         listOf(WatchFaceLayer.BASE),
         SHOW_ON_AMBIENT_DEFAULT

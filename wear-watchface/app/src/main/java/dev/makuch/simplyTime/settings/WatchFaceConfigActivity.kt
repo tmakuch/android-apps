@@ -7,7 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
 import dev.makuch.simplyTime.data.SettingsProps
 import dev.makuch.simplyTime.data.SettingsUIState
-import dev.makuch.simplyTime.databinding.ActivityWatchFaceConfigBinding
+import dev.makuch.simplyTime.databinding.SettingsBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -19,13 +19,13 @@ class WatchFaceConfigActivity : ComponentActivity() {
         )
     }
 
-    private lateinit var uiRef: ActivityWatchFaceConfigBinding
+    private lateinit var uiRef: SettingsBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate()")
 
-        uiRef = ActivityWatchFaceConfigBinding.inflate(layoutInflater)
+        uiRef = SettingsBinding.inflate(layoutInflater)
         setContentView(uiRef.root)
 
         uiRef.showRingSwitch.isEnabled = false
