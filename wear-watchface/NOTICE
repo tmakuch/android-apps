@@ -1,0 +1,4 @@
+I don't freaking get licenses... I'm supposed to document changes to an example?
+No code changes to core android libraries, I'm just using an example watchface as a starting point.
+Heavily modified sample watchface to make it digital rather than analog, lots of readability changes (JS/TS frontend/backend dev here, hey!), but core still stayed the same - renderer and one activity with setting settings.
+
