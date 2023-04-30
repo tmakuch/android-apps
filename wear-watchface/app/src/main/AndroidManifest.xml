@@ -71,7 +71,7 @@
         </service>
 
         <activity
-            android:name=".editor.WatchFaceConfigActivity"
+            android:name=".settings.WatchFaceConfigActivity"
             android:exported="true"
             android:label="@string/title_activity_watch_face_config">
 

@@ -14,9 +14,9 @@ import androidx.wear.watchface.complications.rendering.ComplicationDrawable
 import androidx.wear.watchface.style.CurrentUserStyleRepository
 import androidx.wear.watchface.style.UserStyle
 import androidx.wear.watchface.style.UserStyleSetting
-import dev.makuch.simplyTime.data.watchface.WatchFaceColorPalette
-import dev.makuch.simplyTime.data.watchface.WatchFaceData
-import dev.makuch.simplyTime.data.watchface.WatchFacePaints
+import dev.makuch.simplyTime.data.WatchFaceColorPalette
+import dev.makuch.simplyTime.data.WatchFaceData
+import dev.makuch.simplyTime.data.WatchFacePaints
 import dev.makuch.simplyTime.utils.SHOW_ON_AMBIENT_SETTING
 import dev.makuch.simplyTime.utils.SHOW_RING_SETTING
 import dev.makuch.simplyTime.utils.mapDayOfWeek

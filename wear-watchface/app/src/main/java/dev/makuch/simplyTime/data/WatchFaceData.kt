@@ -1,4 +1,4 @@
-package dev.makuch.simplyTime.data.watchface
+package dev.makuch.simplyTime.data
 
 const val SHOW_RING_DEFAULT = true
 const val SHOW_ON_AMBIENT_DEFAULT = true

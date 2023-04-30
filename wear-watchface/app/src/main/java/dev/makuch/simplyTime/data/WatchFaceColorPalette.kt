@@ -1,4 +1,4 @@
-package dev.makuch.simplyTime.data.watchface
+package dev.makuch.simplyTime.data
 
 import android.content.Context
 import androidx.annotation.DrawableRes

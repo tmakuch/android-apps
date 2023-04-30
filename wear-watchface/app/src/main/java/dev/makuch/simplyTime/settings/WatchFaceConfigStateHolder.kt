@@ -1,4 +1,4 @@
-package dev.makuch.simplyTime.editor
+package dev.makuch.simplyTime.settings
 
 import android.util.Log
 import androidx.activity.ComponentActivity
