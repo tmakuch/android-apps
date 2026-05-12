@@ -1,0 +1,9 @@
+<resources>
+    <!-- Fully transparent, no window chrome — activity is invisible but alive for async work -->
+    <style name="TransparentActivity" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+</resources>

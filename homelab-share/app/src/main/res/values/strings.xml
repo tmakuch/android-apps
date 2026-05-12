@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Share to Homelab</string>
+    <string name="server_url">http://localhost:3000/share</string>
+</resources>
