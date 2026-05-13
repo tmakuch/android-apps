@@ -1,11 +1,16 @@
 package com.homelab.share
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.provider.OpenableColumns
 import android.os.Build
 import android.os.Bundle
-import android.widget.Toast
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -18,6 +23,10 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 
+private const val TAG = "HomelabShare"
+private const val CHANNEL_ID = "homelab_share_results"
+private const val NOTIFICATION_ID = 1
+
 class ShareActivity : AppCompatActivity() {
 
     private val client = OkHttpClient()
@@ -25,6 +34,7 @@ class ShareActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ensureNotificationChannel()
 
         when {
             intent?.action == Intent.ACTION_SEND && intent.type == "text/plain" -> {
@@ -39,11 +49,15 @@ class ShareActivity : AppCompatActivity() {
                 val uri = intentParcelable(intent, Intent.EXTRA_STREAM, Uri::class.java)
                 if (uri != null) sendImage(uri) else finish()
             }
-            else -> finish()
+            else -> {
+                Log.w(TAG, "Unhandled intent: action=${intent?.action} type=${intent?.type}")
+                finish()
+            }
         }
     }
 
     private fun sendText(text: String) {
+        Log.d(TAG, "Sending text (${text.length} chars)")
         scope.launch {
             runCatching {
                 val body = JSONObject()
@@ -52,15 +66,23 @@ class ShareActivity : AppCompatActivity() {
                     .toString()
                     .toRequestBody("application/json".toMediaType())
                 val request = Request.Builder().url(getString(R.string.server_url)).post(body).build()
-                client.newCall(request).execute().use { it.isSuccessful }
+                client.newCall(request).execute().use { response ->
+                    Log.d(TAG, "Response ${response.code} for text")
+                    if (response.isSuccessful) null
+                    else response.body?.string()?.trim()?.takeIf { it.isNotBlank() } ?: "HTTP ${response.code}"
+                }
             }.fold(
-                onSuccess = { ok -> done(if (ok) "Sent" else "Server error") },
-                onFailure = { e -> done("Failed: ${e.message}") }
+                onSuccess = { errorBody -> done(if (errorBody == null) "Sent" else "Server error\n$errorBody") },
+                onFailure = { e ->
+                    Log.e(TAG, "Text request failed", e)
+                    done("Failed: ${e.message}")
+                }
             )
         }
     }
 
     private fun sendUrl(url: String) {
+        Log.d(TAG, "Sending URL: $url")
         scope.launch {
             runCatching {
                 val body = JSONObject()
@@ -69,33 +91,89 @@ class ShareActivity : AppCompatActivity() {
                     .toString()
                     .toRequestBody("application/json".toMediaType())
                 val request = Request.Builder().url(getString(R.string.server_url)).post(body).build()
-                client.newCall(request).execute().use { it.isSuccessful }
+                client.newCall(request).execute().use { response ->
+                    Log.d(TAG, "Response ${response.code} for URL")
+                    if (response.isSuccessful) null
+                    else response.body?.string()?.trim()?.takeIf { it.isNotBlank() } ?: "HTTP ${response.code}"
+                }
             }.fold(
-                onSuccess = { ok -> done(if (ok) "Sent" else "Server error") },
-                onFailure = { e -> done("Failed: ${e.message}") }
+                onSuccess = { errorBody -> done(if (errorBody == null) "Sent" else "Server error\n$errorBody") },
+                onFailure = { e ->
+                    Log.e(TAG, "URL request failed", e)
+                    done("Failed: ${e.message}")
+                }
             )
         }
     }
 
     private fun sendImage(uri: Uri) {
+        Log.d(TAG, "Sending image: $uri")
         scope.launch {
             runCatching {
                 val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
                     ?: error("Cannot read image")
+                Log.d(TAG, "Image size: ${bytes.size} bytes")
                 val mimeType = contentResolver.getType(uri) ?: "image/jpeg"
-                val body = bytes.toRequestBody(mimeType.toMediaType())
-                val request = Request.Builder().url(getString(R.string.server_url)).post(body).build()
-                client.newCall(request).execute().use { it.isSuccessful }
+                val fileName = contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+                    ?.use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else null }
+                Log.d(TAG, "Image mime=$mimeType name=$fileName")
+                val body = bytes.toRequestBody("application/octet-stream".toMediaType())
+                val request = Request.Builder()
+                    .url(getString(R.string.server_url))
+                    .addHeader("X-Content-Type", mimeType)
+                    .apply { if (fileName != null) addHeader("X-File-Name", fileName) }
+                    .post(body)
+                    .build()
+                client.newCall(request).execute().use { response ->
+                    Log.d(TAG, "Response ${response.code} for image")
+                    if (response.isSuccessful) null
+                    else response.body?.string()?.trim()?.takeIf { it.isNotBlank() } ?: "HTTP ${response.code}"
+                }
             }.fold(
-                onSuccess = { ok -> done(if (ok) "Sent" else "Server error") },
-                onFailure = { e -> done("Failed: ${e.message}") }
+                onSuccess = { errorBody -> done(if (errorBody == null) "Sent" else "Server error\n$errorBody") },
+                onFailure = { e ->
+                    Log.e(TAG, "Image request failed", e)
+                    done("Failed: ${e.message}")
+                }
             )
         }
     }
 
     private suspend fun done(message: String) = withContext(Dispatchers.Main) {
-        Toast.makeText(this@ShareActivity, message, Toast.LENGTH_SHORT).show()
+        Log.d(TAG, "Result: $message")
+        notify(message)
         finish()
+    }
+
+    private fun notify(message: String) {
+        val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            Log.w(TAG, "Notification permission not granted — skipping: $message")
+            return
+        }
+
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle("Homelab Share")
+            .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setAutoCancel(true)
+            .build()
+
+        manager.notify(NOTIFICATION_ID, notification)
+    }
+
+    private fun ensureNotificationChannel() {
+        val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        if (manager.getNotificationChannel(CHANNEL_ID) == null) {
+            manager.createNotificationChannel(
+                NotificationChannel(CHANNEL_ID, "Share Results", NotificationManager.IMPORTANCE_LOW)
+            )
+        }
     }
 
     override fun onDestroy() {

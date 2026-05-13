@@ -4,27 +4,27 @@ plugins {
 }
 
 android {
-    namespace 'com.homelab.share'
-    compileSdk 34
+    namespace = 'com.homelab.share'
+    compileSdk = 34
 
     defaultConfig {
-        applicationId "com.homelab.share"
-        minSdk 26
-        targetSdk 34
-        versionCode 1
-        versionName "1.0"
+        applicationId = "com.homelab.share"
+        minSdk = 26
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0"
     }
 
     buildTypes {
         release {
-            minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+            minifyEnabled = true
+            proguardFiles(getDefaultProguardFile('proguard-android-optimize.txt'))
         }
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
 
     kotlinOptions {
