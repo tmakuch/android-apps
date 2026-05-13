@@ -1,39 +1,56 @@
 plugins {
     id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
+}
+
+def localProps = new Properties()
+file("$rootDir/../local.properties").with { f -> if (f.exists()) localProps.load(f.newInputStream()) }
+// Falls back to root-level local.properties for IDE compatibility
+if (localProps.isEmpty()) {
+    file("$rootDir/local.properties").with { f -> if (f.exists()) localProps.load(f.newInputStream()) }
 }
 
 android {
     namespace = 'com.homelab.share'
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.homelab.share"
-        minSdk = 26
-        targetSdk = 34
+        minSdk = 35
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
     }
 
+    signingConfigs {
+        release {
+            storeFile = file(localProps['keystore.path'] ?: '')
+            storePassword = localProps['keystore.password'] ?: ''
+            keyAlias = localProps['keystore.alias'] ?: ''
+            keyPassword = localProps['keystore.keyPassword'] ?: ''
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.release
             minifyEnabled = true
             proguardFiles(getDefaultProguardFile('proguard-android-optimize.txt'))
         }
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = '1.8'
+    lint {
+        // AGP lint tool crashes on JDK 26; app has no custom lint rules to check
+        checkReleaseBuilds = false
     }
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0'
 }

@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.OpenableColumns
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -47,7 +46,7 @@ class ShareActivity : AppCompatActivity() {
                 }
             }
             intent?.action == Intent.ACTION_SEND && intent.type?.startsWith("image/") == true -> {
-                val uri = intentParcelable(intent, Intent.EXTRA_STREAM, Uri::class.java)
+                val uri = intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
                 if (uri != null) sendImage(uri) else finish()
             }
             else -> {
@@ -153,9 +152,7 @@ class ShareActivity : AppCompatActivity() {
     private fun notify(message: String) {
         val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        ) {
+        if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             Log.w(TAG, "Notification permission not granted — skipping: $message")
             return
         }
@@ -186,10 +183,4 @@ class ShareActivity : AppCompatActivity() {
         scope.cancel()
     }
 
-    @Suppress("DEPRECATION")
-    private fun <T> intentParcelable(intent: Intent, key: String, clazz: Class<T>): T? =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
-            intent.getParcelableExtra(key, clazz)
-        else
-            intent.getParcelableExtra(key)
 }

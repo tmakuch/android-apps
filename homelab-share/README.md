@@ -6,25 +6,33 @@ An Android app that appears in the system share menu and forwards shared content
 
 - **Text** — POSTs `{"type": "text", "data": "..."}` as JSON
 - **URLs** — POSTs `{"type": "url", "data": "..."}` as JSON (auto-detected from `text/plain` shares)
-- **Images** — POSTs raw bytes with the image's MIME type as `Content-Type`
+- **Images** — POSTs raw bytes as `application/octet-stream` with `X-Mime-Type` and `X-File-Name` headers
 
-The server URL is configured in `ShareActivity.kt`:
-
-```kotlin
-private const val SERVER_URL = "https://your-server/endpoint"
-```
+Shows a toast on success. On error, posts a persistent notification with the server's response body.
 
 ## Requirements
 
-- Android SDK (set `sdk.dir` in `local.properties`)
+- Android SDK (`sdk.dir` in `local.properties`)
 - JDK 8+
-- Gradle (or use the included wrapper)
+- Gradle wrapper included (`./gradlew`)
+
+## local.properties
+
+Create `local.properties` in the project root (already gitignored):
+
+```properties
+sdk.dir=/path/to/android/sdk
+keystore.path=/path/to/homelab.jks
+keystore.password=your-keystore-password
+keystore.alias=homelab
+keystore.keyPassword=your-key-password
+```
 
 ## Build
 
 ```bash
 ./gradlew assembleDebug    # debug APK
-./gradlew assembleRelease  # release APK (requires signing config, see below)
+./gradlew assembleRelease  # release APK
 ```
 
 Output: `app/build/outputs/apk/debug/` or `.../release/`
@@ -42,42 +50,28 @@ Enable **Developer Options** on your device (tap *Build Number* 7 times in Setti
 Stream logs in real time:
 
 ```bash
-adb logcat --pid=$(adb shell pidof com.homelab.share)
+adb logcat -s HomelabShare
 ```
 
 ### Release
-
-Generate a keystore (one-time):
-
-```bash
-keytool -genkey -v -keystore homelab-share.jks -alias homelab -keyalg RSA -keysize 2048 -validity 10000
-```
-
-Add a signing config to `app/build.gradle`:
-
-```groovy
-android {
-    signingConfigs {
-        release {
-            storeFile file("../../homelab-share.jks")
-            storePassword "your-store-password"
-            keyAlias "homelab"
-            keyPassword "your-key-password"
-        }
-    }
-    buildTypes {
-        release {
-            signingConfig signingConfigs.release
-        }
-    }
-}
-```
-
-> **Do not commit the keystore or passwords to version control.** Store credentials in `local.properties` and read them in the Gradle file instead.
-
-Build and install:
 
 ```bash
 ./gradlew assembleRelease
 adb install app/build/outputs/apk/release/app-release.apk
 ```
+
+Upgrading over an existing release build (same keystore) installs in-place. Switching from debug to release requires uninstalling first:
+
+```bash
+adb uninstall com.homelab.share
+```
+
+## Generating a keystore
+
+One-time setup, shared across all homelab apps:
+
+```bash
+keytool -genkey -v -keystore homelab.jks -alias homelab -keyalg RSA -keysize 2048 -validity 10000
+```
+
+Keep the `.jks` file outside the repository and back it up — losing it means losing the ability to update installed apps.
