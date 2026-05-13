@@ -9,6 +9,7 @@ import android.provider.OpenableColumns
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
@@ -72,10 +73,10 @@ class ShareActivity : AppCompatActivity() {
                     else response.body?.string()?.trim()?.takeIf { it.isNotBlank() } ?: "HTTP ${response.code}"
                 }
             }.fold(
-                onSuccess = { errorBody -> done(if (errorBody == null) "Sent" else "Server error\n$errorBody") },
+                onSuccess = { errorBody -> done(errorBody == null, if (errorBody == null) "Sent to HomeLab" else "Server error\n$errorBody") },
                 onFailure = { e ->
                     Log.e(TAG, "Text request failed", e)
-                    done("Failed: ${e.message}")
+                    done(false, "Failed: ${e.message}")
                 }
             )
         }
@@ -97,10 +98,10 @@ class ShareActivity : AppCompatActivity() {
                     else response.body?.string()?.trim()?.takeIf { it.isNotBlank() } ?: "HTTP ${response.code}"
                 }
             }.fold(
-                onSuccess = { errorBody -> done(if (errorBody == null) "Sent" else "Server error\n$errorBody") },
+                onSuccess = { errorBody -> done(errorBody == null, if (errorBody == null) "Sent to HomeLab" else "Server error\n$errorBody") },
                 onFailure = { e ->
                     Log.e(TAG, "URL request failed", e)
-                    done("Failed: ${e.message}")
+                    done(false, "Failed: ${e.message}")
                 }
             )
         }
@@ -120,7 +121,7 @@ class ShareActivity : AppCompatActivity() {
                 val body = bytes.toRequestBody("application/octet-stream".toMediaType())
                 val request = Request.Builder()
                     .url(getString(R.string.server_url))
-                    .addHeader("X-Content-Type", mimeType)
+                    .addHeader("X-Mime-Type", mimeType)
                     .apply { if (fileName != null) addHeader("X-File-Name", fileName) }
                     .post(body)
                     .build()
@@ -130,18 +131,22 @@ class ShareActivity : AppCompatActivity() {
                     else response.body?.string()?.trim()?.takeIf { it.isNotBlank() } ?: "HTTP ${response.code}"
                 }
             }.fold(
-                onSuccess = { errorBody -> done(if (errorBody == null) "Sent" else "Server error\n$errorBody") },
+                onSuccess = { errorBody -> done(errorBody == null, if (errorBody == null) "Sent to HomeLab" else "Server error\n$errorBody") },
                 onFailure = { e ->
                     Log.e(TAG, "Image request failed", e)
-                    done("Failed: ${e.message}")
+                    done(false, "Failed: ${e.message}")
                 }
             )
         }
     }
 
-    private suspend fun done(message: String) = withContext(Dispatchers.Main) {
+    private suspend fun done(success: Boolean, message: String) = withContext(Dispatchers.Main) {
         Log.d(TAG, "Result: $message")
-        notify(message)
+        if (success) {
+            Toast.makeText(this@ShareActivity, message, Toast.LENGTH_SHORT).show()
+        } else {
+            notify(message)
+        }
         finish()
     }
 
