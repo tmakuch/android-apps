@@ -15,6 +15,7 @@ Shows a toast on success. On error, posts a persistent notification with the ser
 - Android SDK (`sdk.dir` in `local.properties`)
 - JDK 8+
 - Gradle wrapper included (`./gradlew`)
+- Make sure that `values/strings.xml` points to the right url.
 
 ## local.properties
 
@@ -22,7 +23,7 @@ Create `local.properties` in the project root (already gitignored):
 
 ```properties
 sdk.dir=/path/to/android/sdk
-keystore.path=/path/to/homelab.jks
+keystore.path=../homelab.jks
 keystore.password=your-keystore-password
 keystore.alias=homelab
 keystore.keyPassword=your-key-password

@@ -1,0 +1,6 @@
+#android keystore
+homelab.jks
+
+#ide
+.idea
+.vscode
