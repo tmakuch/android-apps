@@ -59,9 +59,11 @@ class ShareActivity : AppCompatActivity() {
                         else -> sendText(text)
                     }
                 }
-                intent?.action == Intent.ACTION_SEND && intent.type?.startsWith("image/") == true -> {
+                intent?.action == Intent.ACTION_SEND && intent.type?.let { t ->
+                    t.startsWith("image/") || t.startsWith("audio/") || t.startsWith("video/")
+                } == true -> {
                     val uri = intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
-                    if (uri != null) sendImage(uri) else withContext(Dispatchers.Main) { finish() }
+                    if (uri != null) sendBinary(uri) else withContext(Dispatchers.Main) { finish() }
                 }
                 else -> {
                     Log.w(TAG, "Unhandled intent: action=${intent?.action} type=${intent?.type}")
@@ -184,16 +186,16 @@ class ShareActivity : AppCompatActivity() {
         )
     }
 
-    private suspend fun sendImage(uri: Uri) {
-        Log.d(TAG, "Sending image: $uri")
+    private suspend fun sendBinary(uri: Uri) {
+        Log.d(TAG, "Sending binary: $uri")
         runCatching {
             val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                ?: error("Cannot read image")
-            Log.d(TAG, "Image size: ${bytes.size} bytes")
-            val mimeType = contentResolver.getType(uri) ?: "image/jpeg"
+                ?: error("Cannot read file")
+            Log.d(TAG, "Binary size: ${bytes.size} bytes")
+            val mimeType = contentResolver.getType(uri) ?: "application/octet-stream"
             val fileName = contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
                 ?.use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else null }
-            Log.d(TAG, "Image mime=$mimeType name=$fileName")
+            Log.d(TAG, "Binary mime=$mimeType name=$fileName")
             executeRequest {
                 bytes.toRequestBody("application/octet-stream".toMediaType())
                     .let {
@@ -208,7 +210,7 @@ class ShareActivity : AppCompatActivity() {
         }.fold(
             onSuccess = { errorBody -> done(errorBody == null, if (errorBody == null) "Sent to HomeLab" else "Server error\n$errorBody") },
             onFailure = { e ->
-                Log.e(TAG, "Image request failed", e)
+                Log.e(TAG, "Binary request failed", e)
                 done(false, "Failed: ${e.message}")
             }
         )
