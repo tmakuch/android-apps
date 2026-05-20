@@ -57,14 +57,47 @@ Legacy Canvas-based Android watch face (Kotlin, `app/legacy/`) is **deprecated**
 
 ---
 
-## Phase 2 — Asset Preparation (TODO)
+## Phase 2 — Asset Preparation (DONE — 2026-05-20)
 
-- [ ] Create directory structure: `app/wff/fonts/`, `app/wff/images/`
-- [ ] Copy `app/legacy/src/main/res/font/digital.ttf` → `app/wff/fonts/digital.ttf`
-- [ ] Copy `app/legacy/src/main/res/font/digital_empty.ttf` → `app/wff/fonts/digital_empty.ttf`
-- [ ] Copy `app/legacy/src/main/res/drawable-nodpi/watch_preview.png` → `app/wff/images/watch_preview.png`
-- [ ] Move `app/wff/division_ring.png` → `app/wff/images/division_ring.png`
-- [ ] Read legacy dimens.xml, colors.xml, RenderUtils.kt for exact pixel positions and sizes to translate to 450x450 WFF coordinate space
+- [x] Create directory structure: `wff/fonts/`, `wff/images/`
+- [x] Copy `legacy/app/src/main/res/font/digital.ttf` → `wff/fonts/digital.ttf`
+- [x] Copy `legacy/app/src/main/res/font/digital_empty.ttf` → `wff/fonts/digital_empty.ttf`
+- [x] Copy `legacy/app/src/main/res/drawable-nodpi/watch_preview.png` → `wff/images/watch_preview.png`
+- [x] Move `wff/division_ring.png` → `wff/images/division_ring.png`
+- [x] Read legacy dimens.xml, colors.xml, RenderUtils.kt — coordinate translation summary below
+
+### Coordinate Translation (Legacy → WFF 450×450)
+
+| Element | Legacy Size | WFF Size | WFF Position | Notes |
+|---------|------------|----------|-------------|-------|
+| Time HH:MM | 85sp | ~85px | centerX=225, baselineY≈255 | `heightOffset = 85 × (1/2.8) ≈ 30`, baseline at centerY + heightOffset |
+| Seconds :SS | 55sp | ~55px | colonX=225, secondsX=225+colonW, Y≈190 | Y = centerY + heightOffset − topMargin(10) − secondarySize(55) |
+| Date DOW.DOM | 40sp | ~40px | X=135 (30%), Y≈295 | Y = centerY + heightOffset + tertiarySize(40) |
+| Division ring | 20px stroke | 20px stroke | centerX=225, centerY=225, radius=225 | Stroke style, orange `#FFFF6A13` |
+| Complication slot | — | — | bounds=(115,72)→(205,162) | Fractional: L=0.255, T=0.16, R=0.455, B=0.36 |
+| Background | — | — | — | `#FF000000` (black) |
+| Foreground text | — | — | — | `#FFFFFFFF` (white) |
+| Polish day names | pon/wt/śr/czw/pt/sob/nd | Use system defaults | — | WFF `[DAY_OF_WEEK_SHORT]` uses device locale |
+
+### Key Renderer Details
+
+- **heightOffset** = textPaint.textSize × (1/2.8), used to offset text baseline from vertical center
+- **Colon blinking**: Hidden in active mode when `nano < 500_000_000` (first half of each second). WFF may not support this — fall back to always-visible colon.
+- **Ambient mode**: Hides seconds, date, and complications. Switches time font to `digital_empty.ttf`.
+- **Ring visibility**: `showRing AND (!isAmbient OR showOnAmbient)` — boolean logic gate.
+
+### Directory Structure After Phase 2
+
+```
+wff/
+├── fonts/
+│   ├── digital.ttf
+│   └── digital_empty.ttf
+├── images/
+│   ├── division_ring.png
+│   └── watch_preview.png
+└── watchface.xml  (to be created — Phase 3)
+```
 
 ---
 
