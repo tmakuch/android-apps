@@ -8,7 +8,7 @@ You won't find anything groundbreaking here, it's just a developers repo that is
 
 Simple watchface showing time in a digital clock with a small twist from the time I was hyped around Tom Clancy's The Division.
 
-Since I'm using a font that is free for private use I'm simply not adding it to the repo. For you to run it, you need to get two fonts and put them into wear-watchface wear-watchface/app/src/main/res/font folder under names digital.ttf and digital_empty.ttf (customizable in code). First one is the main font, the second is used when the watch screen is in ambient mode. You need digits for the time and letters that will be used is short for of the day (mon, tue, etc.).
+There are two versions - legacy that worked up to WearOS 5.0 (a kotlin up) and a watch face format projects that works on latest (as of 2026 Q1) wearOS.
 
 ## Homelab Share
 
